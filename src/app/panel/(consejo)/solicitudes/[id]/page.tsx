@@ -95,7 +95,7 @@ export default async function DetalleSolicitud({ params }: PageProps<"/panel/sol
           <p className="mt-2 mb-6 text-sm leading-relaxed text-muted-foreground">
             {solicitud.estado === "pendiente" || !solicitud.revisado_en
               ? `Decide si ${primerNombre(solicitud.nombre)} se integra al Colectivo.`
-              : `${etiquetasEstado[solicitud.estado].singular} por ${revisor ?? "un integrante del Consejo"} el ${formatearFecha(solicitud.revisado_en)}.`}
+              : `${etiquetasEstado[solicitud.estado].singular} por ${revisor ?? "un integrante del Consejo"} el ${formatearFecha(solicitud.revisado_en)}`}
           </p>
           <FormularioRevision id={solicitud.id} estadoActual={solicitud.estado} notas={solicitud.notas_consejo} />
         </section>
