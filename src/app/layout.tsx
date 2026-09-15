@@ -6,6 +6,7 @@ import { sitio } from "@/content/sitio";
 import { datosOrganizacion } from "@/lib/seo/datos-estructurados";
 import { esIndexable, obtenerUrlSitio } from "@/lib/url-sitio";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next"
 
 const oswald = Oswald({
   variable: "--font-oswald",
@@ -89,6 +90,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Saltar al contenido
         </a>
         {children}
+        <Analytics />
       </body>
     </html>
   );
