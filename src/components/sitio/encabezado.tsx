@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ArrowRightIcon, MenuIcon } from "lucide-react"
+import { ArrowRightIcon, MenuIcon, UserRoundIcon } from "lucide-react"
 import { cn } from "cn"
 
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -101,6 +101,17 @@ export function Encabezado() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/panel"
+            prefetch={false}
+            className={cn(
+              buttonVariants({ variant: "ghost" }),
+              "hidden h-10 gap-2 px-3 text-azul hover:bg-azul/5 hover:text-azul sm:inline-flex"
+            )}
+          >
+            <UserRoundIcon aria-hidden />
+            <span className="sr-only xl:not-sr-only">Ingresar</span>
+          </Link>
           <Link href="/#unete" className={cn(buttonVariants({ variant: "acento" }), "hidden h-10 px-4 sm:inline-flex")}>
             Únete
           </Link>
@@ -144,6 +155,14 @@ export function Encabezado() {
                 >
                   Quiero ser miembro
                   <ArrowRightIcon data-icon="inline-end" aria-hidden />
+                </SheetClose>
+                <SheetClose
+                  render={<Link href="/panel" prefetch={false} />}
+                  nativeButton={false}
+                  className={cn(buttonVariants({ variant: "outline", size: "xl" }), "w-full text-azul")}
+                >
+                  <UserRoundIcon data-icon="inline-start" aria-hidden />
+                  Acceso Consejo
                 </SheetClose>
                 <p className="text-center text-sm text-muted-foreground">
                   Síguenos en{" "}
