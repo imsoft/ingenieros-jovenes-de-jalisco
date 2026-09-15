@@ -9,7 +9,7 @@ import { BotonFormulario } from "@/components/panel/boton-formulario"
 import { InsigniaRegistro } from "@/components/panel/insignia-registro"
 import { buttonVariants } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { formatearFechaLarga, formatearPrecio } from "@/lib/eventos/formato"
+import { formatearFechaLarga, formatearMonto, formatearPrecio } from "@/lib/eventos/formato"
 import type { EstadoRegistro, RegistroEvento } from "@/lib/eventos/registros"
 import { formatearFecha } from "@/lib/panel/formato"
 import { listarRegistrosEvento, obtenerEventoPanel } from "@/lib/panel/eventos"
@@ -29,8 +29,8 @@ export default async function RegistrosEvento({ params }: PageProps<"/panel/even
   const resumen = [
     { etiqueta: "Registrados", valor: `${activos.length}${evento.cupo !== null ? ` / ${evento.cupo}` : ""}` },
     { etiqueta: "Miembros", valor: String(activos.filter((registro) => registro.es_miembro).length) },
-    { etiqueta: "Cobrado", valor: formatearPrecio(suma(pagados)) },
-    { etiqueta: "Por cobrar", valor: formatearPrecio(suma(pendientes)) },
+    { etiqueta: "Cobrado", valor: formatearMonto(suma(pagados)) },
+    { etiqueta: "Por cobrar", valor: formatearMonto(suma(pendientes)) },
   ]
 
   return (

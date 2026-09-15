@@ -56,6 +56,11 @@ export function formatearPrecio(valor: number) {
   return valor === 0 ? "Gratis" : moneda.format(valor)
 }
 
+// Para totales y montos contables: siempre en moneda, incluso cuando es 0.
+export function formatearMonto(valor: number) {
+  return moneda.format(valor)
+}
+
 // Texto corto de precio para tarjetas: "Entrada libre", "$350" o "$350 · Miembros $300".
 export function textoPrecio(evento: Pick<Evento, "precio_publico" | "precio_miembro">) {
   if (evento.precio_publico === null || evento.precio_publico === 0) return "Entrada libre"
