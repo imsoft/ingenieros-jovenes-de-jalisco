@@ -29,11 +29,14 @@ export const obtenerAccesoPanel = cache(async (): Promise<AccesoPanel> => {
   const correo = typeof claims.email === "string" ? claims.email : null
 
   // RLS solo deja ver miembros_consejo a miembros activos: si no hay fila, no hay acceso.
-  const { data: fila } = await supabase
+  const { data: fila, error } = await supabase
     .from("miembros_consejo")
     .select("nombre, rol, activo")
     .eq("usuario_id", claims.sub)
     .maybeSingle()
+
+  // Un error aquí (p. ej. migración sin aplicar) no debe confundirse con "no es miembro".
+  if (error) console.error("[panel] No se pudo verificar la membresía:", error.code, error.message)
 
   if (!fila?.activo) return { tipo: "sin-acceso", correo }
 
