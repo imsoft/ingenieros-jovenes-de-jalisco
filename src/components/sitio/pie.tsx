@@ -54,6 +54,11 @@ export function Pie() {
                 Aviso de privacidad
               </Link>
             </li>
+            <li>
+              <Link href="/panel" prefetch={false} className="transition-colors hover:text-naranja">
+                Acceso Consejo
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
