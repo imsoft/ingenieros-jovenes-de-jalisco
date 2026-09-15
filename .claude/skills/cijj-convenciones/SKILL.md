@@ -37,6 +37,15 @@ Sitio web del **Colectivo de Ingenieros Jóvenes de Jalisco A.C.** (fundado el 1
 - Iconos de Instagram y Facebook desde `iconos-redes.tsx` (lucide no incluye marcas); textura del puente con `DecoracionPuente`.
 - Responsive: diseñar primero para ~360–500px. Contenido alterno por breakpoint (p. ej. pilares en carrusel con scroll-snap en móvil y pestañas verticales en `lg`) es válido si ambos comparten los datos de `sitio.ts`.
 
+## Panel del Consejo (`/panel`)
+
+- Rutas: `src/app/panel/ingresar` y `sin-acceso` (públicas del panel) y el grupo `src/app/panel/(consejo)/` (layout que exige membresía).
+- Sesión con `@supabase/ssr`: `src/lib/supabase/sesion.ts` (servidor, cookies) y `src/proxy.ts` → `src/lib/supabase/proxy.ts` (refresca sesión, solo matcher `/panel`). Nunca `getSession()` en servidor; usar `getClaims()`.
+- Autorización en capas: proxy (optimista) → `exigirMiembroConsejo()` de `src/lib/panel/sesion.ts` en cada página, consulta y server action → RLS con `privado.es_miembro_consejo()`. Ninguna capa sustituye a las otras.
+- Consultas del panel en `src/lib/panel/solicitudes.ts` (DAL con `server-only`); las páginas no llaman a Supabase directamente.
+- Acciones en `src/acciones/panel.ts`; tras mutar, `revalidatePath("/panel", "layout")`.
+- Alta y baja de miembros: `docs/panel-consejo.md`.
+
 ## SEO
 
 - URL absoluta siempre con `obtenerUrlSitio()` de `src/lib/url-sitio.ts` (NEXT_PUBLIC_SITE_URL → dominio de producción de Vercel → localhost). Nunca escribir dominios a mano.
