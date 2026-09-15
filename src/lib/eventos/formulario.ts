@@ -37,6 +37,13 @@ export function generarSlug(texto: string) {
     .replace(/-+$/, "")
 }
 
+// La dirección se deriva del título y el año: "Jalisco al Grito" + 2026 → "jalisco-al-grito-2026".
+// La usan el formulario (vista previa) y el servidor (valor real), para que siempre coincidan.
+export function slugParaEvento(titulo: string, fecha: string) {
+  const anio = /^\d{4}/.exec(fecha)?.[0] ?? ""
+  return generarSlug(anio && !titulo.includes(anio) ? `${titulo} ${anio}` : titulo)
+}
+
 export type ValoresEvento = {
   titulo: string
   slug: string

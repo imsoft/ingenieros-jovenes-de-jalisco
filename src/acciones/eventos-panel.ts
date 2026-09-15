@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 
-import { generarSlug, isoDesdeHoraLocal, type ValoresEvento } from "@/lib/eventos/formulario"
+import { isoDesdeHoraLocal, slugParaEvento, type ValoresEvento } from "@/lib/eventos/formulario"
 import { esEstadoRegistro, type EstadoRegistro } from "@/lib/eventos/registros"
 import { exigirMiembroConsejo } from "@/lib/panel/sesion"
 import { crearClienteSupabaseConSesion } from "@/lib/supabase/sesion"
@@ -35,7 +35,8 @@ function leerValores(formData: FormData): ValoresEvento {
   }
   return {
     titulo: texto("titulo"),
-    slug: texto("slug"),
+    // La dirección no se captura: se genera en el servidor al crear el evento.
+    slug: "",
     resumen: texto("resumen"),
     descripcion: texto("descripcion"),
     fecha: texto("fecha"),
@@ -53,15 +54,10 @@ function leerValores(formData: FormData): ValoresEvento {
   }
 }
 
+const esSlugDuplicado = (error: { code?: string; message: string }) =>
+  error.code === "23505" && error.message.includes("slug")
+
 function errorAlGuardar(error: { code?: string; message: string }, valores: ValoresEvento): EstadoFormularioEvento {
-  if (error.code === "23505" && error.message.includes("slug")) {
-    return {
-      tipo: "error",
-      mensaje: "Ya existe un evento con esa dirección.",
-      errores: { slug: ["Ya existe un evento con esta dirección; cambia el identificador."] },
-      valores,
-    }
-  }
   console.error("[panel] No se pudo guardar el evento:", error.code, error.message)
   return { tipo: "error", mensaje: "No se pudo guardar el evento. Inténtalo de nuevo.", errores: {}, valores }
 }
@@ -89,19 +85,8 @@ export async function guardarEvento(
   }
 
   const datos = resultado.data
-  const anio = datos.fecha.slice(0, 4)
-  const slug = datos.slug || generarSlug(datos.titulo.includes(anio) ? datos.titulo : `${datos.titulo} ${anio}`)
-  if (!slug) {
-    return {
-      tipo: "error",
-      mensaje: "Revisa los campos marcados.",
-      errores: { slug: ["Escribe una dirección con letras o números."] },
-      valores,
-    }
-  }
 
   const fila = {
-    slug,
     titulo: datos.titulo,
     resumen: datos.resumen,
     descripcion: datos.descripcion,
@@ -121,25 +106,48 @@ export async function guardarEvento(
   const supabase = await crearClienteSupabaseConSesion()
 
   if (eventoId === null) {
-    const { data, error } = await supabase
-      .from("eventos")
-      .insert({ ...fila, creado_por: miembro.usuarioId })
-      .select("id")
-      .single()
-    if (error) return errorAlGuardar(error, valores)
+    // La dirección se genera del título y el año; si ya existe, se agrega un número (-2, -3…).
+    const base = slugParaEvento(datos.titulo, datos.fecha)
+    if (!base) {
+      return {
+        tipo: "error",
+        mensaje: "Revisa los campos marcados.",
+        errores: { titulo: ["El título debe incluir letras o números."] },
+        valores,
+      }
+    }
 
-    revalidarEventos(slug)
-    redirect(`/panel/eventos/${data.id}?creado=1`)
+    for (let intento = 1; intento <= 20; intento++) {
+      const slug = intento === 1 ? base : `${base.slice(0, 76).replace(/-+$/, "")}-${intento}`
+      const { data, error } = await supabase
+        .from("eventos")
+        .insert({ ...fila, slug, creado_por: miembro.usuarioId })
+        .select("id")
+        .single()
+
+      if (error && esSlugDuplicado(error)) continue
+      if (error) return errorAlGuardar(error, valores)
+
+      revalidarEventos(slug)
+      redirect(`/panel/eventos/${data.id}?creado=1`)
+    }
+
+    return {
+      tipo: "error",
+      mensaje: "Ya hay muchos eventos con ese título. Cámbialo un poco para distinguirlo.",
+      errores: { titulo: ["Usa un título más específico."] },
+      valores,
+    }
   }
 
-  const { data: previo } = await supabase.from("eventos").select("slug").eq("id", eventoId).maybeSingle()
-  const { data, error } = await supabase.from("eventos").update(fila).eq("id", eventoId).select("id")
+  // Al editar, la dirección no cambia para no romper enlaces ya compartidos.
+  const { data, error } = await supabase.from("eventos").update(fila).eq("id", eventoId).select("id, slug")
   if (error) return errorAlGuardar(error, valores)
   if (!data?.length) {
     return { tipo: "error", mensaje: "No encontramos el evento o ya no tienes permiso para editarlo.", errores: {}, valores }
   }
 
-  revalidarEventos(slug, previo?.slug)
+  revalidarEventos(data[0].slug)
   return {
     tipo: "exito",
     mensaje: datos.publicado ? "Cambios guardados y publicados en el sitio." : "Cambios guardados. El evento sigue como borrador.",

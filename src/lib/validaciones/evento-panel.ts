@@ -19,12 +19,6 @@ const monto = z
 export const esquemaEvento = z
   .object({
     titulo: z.string().trim().min(3, "Escribe el título (mínimo 3 caracteres).").max(120, "Máximo 120 caracteres."),
-    slug: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .max(80, "Máximo 80 caracteres.")
-      .refine((valor) => valor === "" || /^[a-z0-9]+(-[a-z0-9]+)*$/.test(valor), "Usa solo minúsculas, números y guiones."),
     resumen: z.string().trim().min(10, "Escribe un resumen de al menos 10 caracteres.").max(300, "Máximo 300 caracteres."),
     descripcion: z.string().trim().max(5000, "Máximo 5,000 caracteres."),
     fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Elige la fecha del evento."),

@@ -1,7 +1,7 @@
 "use client"
 
-import { useActionState, useEffect, useRef } from "react"
-import { CircleCheckIcon, SaveIcon, TriangleAlertIcon } from "lucide-react"
+import { useActionState, useEffect, useRef, useState } from "react"
+import { CircleCheckIcon, LockIcon, SaveIcon, TriangleAlertIcon } from "lucide-react"
 import { cn } from "cn"
 
 import { guardarEvento } from "@/acciones/eventos-panel"
@@ -10,7 +10,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
-import type { ValoresEvento } from "@/lib/eventos/formulario"
+import { slugParaEvento, type ValoresEvento } from "@/lib/eventos/formulario"
 import type { EstadoFormularioEvento } from "@/lib/validaciones/evento-panel"
 
 type CampoTexto = Exclude<keyof ValoresEvento, "registroAbierto" | "publicado">
@@ -26,6 +26,10 @@ export function FormularioEvento({
 }) {
   const [estado, accion, enviando] = useActionState(guardarEvento.bind(null, eventoId), estadoInicial)
   const formularioRef = useRef<HTMLFormElement>(null)
+  // Título y fecha controlados para mostrar en vivo la dirección que se generará.
+  const [titulo, setTitulo] = useState(valoresIniciales.titulo)
+  const [fecha, setFecha] = useState(valoresIniciales.fecha)
+  const direccion = eventoId ? valoresIniciales.slug : slugParaEvento(titulo, fecha)
 
   useEffect(() => {
     if (estado.tipo === "error") {
@@ -59,24 +63,39 @@ export function FormularioEvento({
 
       <Seccion titulo="Información">
         <Campo nombre="titulo" etiqueta="Título" error={errores.titulo}>
-          <Input {...campo("titulo")} required maxLength={120} placeholder="Ej. Jalisco al Grito 2026…" className="h-11 rounded-xl px-4" />
+          <Input
+            {...campo("titulo")}
+            defaultValue={undefined}
+            value={titulo}
+            onChange={(evento) => setTitulo(evento.target.value)}
+            required
+            maxLength={120}
+            placeholder="Ej. Jalisco al Grito…"
+            className="h-11 rounded-xl px-4"
+          />
         </Campo>
         <Campo
           nombre="slug"
           etiqueta="Dirección de la página"
-          descripcion="Déjala vacía para generarla desde el título. Solo minúsculas, números y guiones."
-          error={errores.slug}
+          descripcion={
+            eventoId
+              ? "Se fijó al crear el evento para no romper los enlaces que ya se compartieron."
+              : "Se genera automáticamente con el título y el año del evento."
+          }
         >
-          <div className="flex items-stretch overflow-hidden rounded-xl border border-input focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
-            <span className="flex items-center bg-secondary px-3 text-sm text-muted-foreground select-none">/eventos/</span>
+          <div className="flex items-stretch overflow-hidden rounded-xl border border-input bg-secondary/70">
+            <span className="flex items-center pl-4 text-sm text-muted-foreground select-none">/eventos/</span>
             <input
-              {...campo("slug")}
-              maxLength={80}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="jalisco-al-grito-2026…"
-              className="h-11 min-w-0 flex-1 bg-transparent px-3 text-base outline-none placeholder:text-muted-foreground md:text-sm"
+              id="evento-slug"
+              value={direccion}
+              placeholder="se-genera-con-el-titulo"
+              readOnly
+              disabled
+              className="h-11 min-w-0 flex-1 cursor-not-allowed truncate bg-transparent px-1 text-base text-foreground/70 outline-none placeholder:text-muted-foreground/70 md:text-sm"
             />
+            <span className="flex items-center px-4 text-muted-foreground" title="Campo automático">
+              <LockIcon className="size-4" aria-hidden />
+            </span>
           </div>
         </Campo>
         <Campo nombre="resumen" etiqueta="Resumen" descripcion="Una o dos frases. Aparece en las tarjetas y al compartir el enlace." error={errores.resumen}>
@@ -90,7 +109,15 @@ export function FormularioEvento({
       <Seccion titulo="Fecha y lugar" descripcion="Horario del centro de México.">
         <div className="grid gap-5 sm:grid-cols-3">
           <Campo nombre="fecha" etiqueta="Fecha" error={errores.fecha}>
-            <Input {...campo("fecha")} type="date" required className="h-11 rounded-xl px-4" />
+            <Input
+              {...campo("fecha")}
+              defaultValue={undefined}
+              value={fecha}
+              onChange={(evento) => setFecha(evento.target.value)}
+              type="date"
+              required
+              className="h-11 rounded-xl px-4"
+            />
           </Campo>
           <Campo nombre="horaInicio" etiqueta="Inicia" error={errores.horaInicio}>
             <Input {...campo("horaInicio")} type="time" required className="h-11 rounded-xl px-4" />
