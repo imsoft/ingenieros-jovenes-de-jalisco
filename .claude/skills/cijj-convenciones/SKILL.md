@@ -37,6 +37,16 @@ Sitio web del **Colectivo de Ingenieros Jóvenes de Jalisco A.C.** (fundado el 1
 - Iconos de Instagram y Facebook desde `iconos-redes.tsx` (lucide no incluye marcas); textura del puente con `DecoracionPuente`.
 - Responsive: diseñar primero para ~360–500px. Contenido alterno por breakpoint (p. ej. pilares en carrusel con scroll-snap en móvil y pestañas verticales en `lg`) es válido si ambos comparten los datos de `sitio.ts`.
 
+## SEO
+
+- URL absoluta siempre con `obtenerUrlSitio()` de `src/lib/url-sitio.ts` (NEXT_PUBLIC_SITE_URL → dominio de producción de Vercel → localhost). Nunca escribir dominios a mano.
+- Metadatos globales en `src/app/layout.tsx` (título plantilla `%s | Ingenieros Jóvenes de Jalisco`, Open Graph, Twitter, robots). Cada página nueva exporta `metadata` con `title`, `description`, `alternates.canonical` propio y su `openGraph.url`; si no, hereda la canónica de `/`.
+- Toda página pública nueva se agrega a `src/app/sitemap.ts`. Rutas privadas (p. ej. el panel del Consejo) se excluyen del sitemap, se bloquean en `src/app/robots.ts` y llevan `robots: { index: false }`.
+- Solo producción es indexable (`esIndexable()`); las previews de Vercel quedan con noindex.
+- Datos estructurados con `<JsonLd datos={…} />` (`src/components/seo/json-ld.tsx`) y constructores en `src/lib/seo/datos-estructurados.ts`, generados desde `sitio.ts` para no duplicar contenido. Eventos futuros usarán `@type: "Event"`.
+- La imagen para compartir es `src/app/opengraph-image.tsx` (Satori: solo flexbox; fuentes WOFF/TTF en `src/assets/fuentes/`, no woff2).
+- Guía para el Consejo (Search Console, dominio, Google Business): `docs/seo.md`.
+
 ## Marca
 
 - Colores del logo, expuestos como utilidades de Tailwind: `azul` (`#10436f`), `azul-profundo` (`#0a2c4a`), `naranja` (`#e27227`). Úsalos como `bg-azul`, `text-naranja`, `ring-azul/10`. `--primary` apunta al azul. No introducir otros colores de marca.

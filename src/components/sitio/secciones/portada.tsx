@@ -44,8 +44,9 @@ export function Portada() {
           </h1>
 
           <p className="mt-8 max-w-xl text-lg leading-relaxed text-pretty text-foreground/70">
-            Somos la comunidad que integra a ingenieros jóvenes de todas las especialidades para
-            crecer en lo empresarial, gremial, académico, político y técnico.
+            El Colectivo de Ingenieros Jóvenes de Jalisco es la comunidad que integra a ingenieros
+            de todas las especialidades en Guadalajara y todo el estado para crecer en lo
+            empresarial, gremial, académico, político y técnico.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">

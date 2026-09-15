@@ -1,3 +1,4 @@
+import { JsonLd } from "@/components/seo/json-ld"
 import { BarraCtaMovil } from "@/components/sitio/barra-cta-movil"
 import { Encabezado } from "@/components/sitio/encabezado"
 import { Pie } from "@/components/sitio/pie"
@@ -9,6 +10,7 @@ import { Pilares } from "@/components/sitio/secciones/pilares"
 import { Portada } from "@/components/sitio/secciones/portada"
 import { Preguntas } from "@/components/sitio/secciones/preguntas"
 import { Unete } from "@/components/sitio/secciones/unete"
+import { datosPreguntasFrecuentes } from "@/lib/seo/datos-estructurados"
 
 export default function Inicio() {
   return (
@@ -26,6 +28,7 @@ export default function Inicio() {
       </main>
       <Pie />
       <BarraCtaMovil />
+      <JsonLd datos={datosPreguntasFrecuentes()} />
     </>
   )
 }

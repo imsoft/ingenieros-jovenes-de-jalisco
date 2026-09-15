@@ -3,9 +3,22 @@ import Link from "next/link"
 
 import { sitio } from "@/content/sitio"
 
+const descripcion = `Aviso de privacidad del ${sitio.nombre}: qué datos recabamos, para qué los usamos y cómo ejercer tus derechos ARCO.`
+
 export const metadata: Metadata = {
   title: "Aviso de privacidad",
-  description: `Aviso de privacidad del ${sitio.nombre}.`,
+  description: descripcion,
+  alternates: { canonical: "/aviso-de-privacidad" },
+  openGraph: {
+    type: "website",
+    locale: "es_MX",
+    url: "/aviso-de-privacidad",
+    siteName: sitio.nombre,
+    title: `Aviso de privacidad | ${sitio.nombreCorto}`,
+    description: descripcion,
+    // Al definir openGraph aquí se pierde la imagen heredada del layout; se vuelve a declarar.
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: `${sitio.nombre}: ${sitio.lema}` }],
+  },
 }
 
 // Provisional: redactado con base en la LFPDPPP; debe revisarlo el Consejo o un asesor legal antes de publicarse.
