@@ -69,7 +69,17 @@ export function Pie() {
           <p>
             © {new Date().getFullYear()} {sitio.nombre} Todos los derechos reservados.
           </p>
-          <p>{sitio.lema}</p>
+          <p>
+            Desarrollado por{" "}
+            <a
+              href="https://www.imsoft.io/es?utm_source=ingenieros-jovenes-de-jalisco&utm_medium=referral&utm_campaign=credito-sitio"
+              target="_blank"
+              rel="noopener"
+              className="font-medium text-white/70 underline-offset-4 transition-colors hover:text-naranja hover:underline"
+            >
+              imSoft
+            </a>
+          </p>
         </div>
       </div>
     </footer>
