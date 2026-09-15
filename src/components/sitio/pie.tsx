@@ -33,7 +33,7 @@ export function Pie() {
           <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm lg:grid-cols-1">
             {navegacion.map((enlace) => (
               <li key={enlace.href}>
-                <Link href={`/${enlace.href}`} className="transition-colors hover:text-naranja">
+                <Link href={enlace.href} className="transition-colors hover:text-naranja">
                   {enlace.etiqueta}
                 </Link>
               </li>

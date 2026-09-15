@@ -15,12 +15,13 @@ export const sitio = {
   },
 } as const
 
+// Las anclas llevan "/" para funcionar también desde otras páginas (p. ej. /eventos).
 export const navegacion = [
-  { href: "#nosotros", etiqueta: "Nosotros" },
-  { href: "#pilares", etiqueta: "Pilares" },
-  { href: "#actividades", etiqueta: "Actividades" },
-  { href: "#beneficios", etiqueta: "Beneficios" },
-  { href: "#preguntas", etiqueta: "Preguntas" },
+  { href: "/#nosotros", etiqueta: "Nosotros" },
+  { href: "/#pilares", etiqueta: "Pilares" },
+  { href: "/eventos", etiqueta: "Eventos" },
+  { href: "/#beneficios", etiqueta: "Beneficios" },
+  { href: "/#preguntas", etiqueta: "Preguntas" },
 ] as const
 
 // Provisional: redactado a partir de las redes sociales.

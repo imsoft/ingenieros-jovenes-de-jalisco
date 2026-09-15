@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ExternalLinkIcon, InboxIcon, LayoutDashboardIcon } from "lucide-react"
+import { CalendarDaysIcon, ExternalLinkIcon, InboxIcon, LayoutDashboardIcon } from "lucide-react"
 import { cn } from "cn"
 
 const enlaces = [
   { href: "/panel", etiqueta: "Resumen", icono: LayoutDashboardIcon, exacto: true },
   { href: "/panel/solicitudes", etiqueta: "Solicitudes", icono: InboxIcon, exacto: false },
+  { href: "/panel/eventos", etiqueta: "Eventos", icono: CalendarDaysIcon, exacto: false },
 ] as const
 
 export function NavegacionPanel({ className }: { className?: string }) {

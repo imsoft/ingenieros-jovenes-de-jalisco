@@ -55,6 +55,40 @@ join auth.users u on u.id = m.usuario_id
 order by m.activo desc, m.nombre;
 ```
 
+## 5. Eventos
+
+### Preparación (una sola vez)
+
+En Supabase → **SQL Editor**, ejecuta `supabase/migrations/20260916000000_eventos.sql`. Crea las tablas de eventos, fotos y registros, la función de registro y el espacio de imágenes (`eventos`).
+
+### Crear y publicar un evento
+
+1. Panel → **Eventos → Nuevo evento**.
+2. Llena título, resumen, fecha, hora y lugar. Opcional: descripción, dirección, enlace de Google Maps, precios, cupo e instrucciones de pago.
+   - **Precio público vacío** = entrada libre.
+   - **Precio miembros vacío** = los miembros pagan lo mismo que el público.
+   - **Cupo vacío** = sin límite.
+3. Guarda. Se crea como **borrador** (no aparece en el sitio).
+4. Sube la **portada** (horizontal, hasta 5 MB) y, si quieres, fotos a la **galería**.
+5. Marca **Publicado** y guarda. Aparece en `/eventos` y en la portada del sitio.
+
+### Cómo funciona el registro
+
+- La persona se registra en la página del evento y recibe un **folio**, el **monto** que le toca y las **instrucciones de pago**.
+- Si su correo tiene una **solicitud de afiliación aprobada**, se aplica automáticamente el precio de miembro.
+- El registro se cierra solo cuando se llena el cupo o empieza el evento. También puedes cerrarlo desmarcando **Registro abierto**.
+
+### Dar seguimiento
+
+Panel → **Eventos → Registros** del evento:
+
+- **Marcar pagado** cuando recibas el pago; **Cancelar** libera el lugar; **Reactivar** lo vuelve a ocupar.
+- **Descargar CSV** para la lista de asistencia o para abrirla en Excel.
+
+Después del evento, sube fotos a la galería: el evento pasa solo a **Eventos anteriores** en el sitio.
+
+> Un evento con registros no se puede eliminar (para no perder el historial); despublícalo si necesitas ocultarlo.
+
 ## Seguridad
 
 - Las reglas de acceso viven en la base de datos (RLS): aunque alguien tuviera la llave pública del sitio, no puede leer solicitudes sin ser miembro activo.

@@ -46,6 +46,16 @@ Sitio web del **Colectivo de Ingenieros Jóvenes de Jalisco A.C.** (fundado el 1
 - Acciones en `src/acciones/panel.ts`; tras mutar, `revalidatePath("/panel", "layout")`.
 - Alta y baja de miembros: `docs/panel-consejo.md`.
 
+## Eventos
+
+- Público: `src/app/eventos/` (layout con Encabezado/Pie) y sección `ProximosEventos` en la portada. Lecturas con el cliente anónimo en `src/lib/eventos/publico.ts` (memorizadas con `cache`).
+- Caché (el proyecto NO usa Cache Components): páginas públicas con `export const revalidate = N` y cada action del panel llama a `revalidarEventos()` (portada, `/eventos`, detalle, sitemap y panel).
+- Registro solo mediante la función `public.registrar_en_evento` (security definer): bloquea el evento (`for update`) para respetar el cupo, detecta miembro por correo con solicitud aprobada, calcula monto y folio. El público no tiene privilegios sobre `registros_evento`.
+- `eventos.lugares_ocupados` lo mantiene un trigger; no se escribe desde la app.
+- Fechas: se guardan en UTC y se muestran/capturan en `America/Mexico_City` (`src/lib/eventos/formato.ts` y `formulario.ts`, UTC-6 fijo).
+- Imágenes: bucket público `eventos` (≤5 MB, JPG/PNG/WebP). Subida en dos pasos: `crearSubidaImagen` (servidor, verifica Consejo, URL firmada) → `uploadToSignedUrl` en el navegador → `confirmarPortada`/`agregarFoto`. Rutas `{eventoId}/{portada|galeria}/{uuid}.{ext}`; `next.config.ts` solo permite esa ruta en `remotePatterns`.
+- Al instalar componentes shadcn que dependen de `button`, NUNCA sobrescribir `src/components/ui/button.tsx` (tiene variantes de marca).
+
 ## SEO
 
 - URL absoluta siempre con `obtenerUrlSitio()` de `src/lib/url-sitio.ts` (NEXT_PUBLIC_SITE_URL → dominio de producción de Vercel → localhost). Nunca escribir dominios a mano.
