@@ -1,11 +1,19 @@
 "use client"
 
-import { useActionState, useEffect, useRef } from "react"
+import { useActionState, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { CircleCheckIcon, SendIcon, TriangleAlertIcon } from "lucide-react"
+import { CircleCheckIcon, MapPinIcon, SendIcon, TriangleAlertIcon } from "lucide-react"
 
 import { enviarSolicitudAfiliacion } from "@/acciones/afiliacion"
 import { IconoInstagram } from "@/components/sitio/iconos-redes"
+import {
+  Autocomplete,
+  AutocompleteContent,
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
+} from "@/components/ui/autocomplete"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -15,9 +23,15 @@ import type { CampoAfiliacion, EstadoFormularioAfiliacion } from "@/lib/validaci
 
 const estadoInicial: EstadoFormularioAfiliacion = { tipo: "inicial" }
 
+// Compara sin acentos ni mayúsculas: "tonala" encuentra "Tonalá".
+const normalizar = (texto: string) => texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+const coincideMunicipio = (municipio: string, consulta: string) => normalizar(municipio).includes(normalizar(consulta))
+
 export function FormularioAfiliacion() {
   const [estado, accion, enviando] = useActionState(enviarSolicitudAfiliacion, estadoInicial)
   const formularioRef = useRef<HTMLFormElement>(null)
+  // Controlado para conservar lo escrito si el envío regresa con errores.
+  const [municipio, setMunicipio] = useState("")
 
   // Tras un envío con errores, lleva el foco al primer campo inválido.
   useEffect(() => {
@@ -119,22 +133,34 @@ export function FormularioAfiliacion() {
         </div>
 
         <Campo id="municipio" etiqueta="Municipio" error={errores.municipio}>
-          <Input
-            id="municipio"
-            name="municipio"
-            list="municipios-jalisco"
-            autoComplete="address-level2"
-            placeholder="Ej. Zapopan…"
-            required
-            defaultValue={valores?.municipio}
-            className="h-12 rounded-xl px-4"
-            {...propsError("municipio")}
-          />
-          <datalist id="municipios-jalisco">
-            {municipiosSugeridos.map((municipio) => (
-              <option key={municipio} value={municipio} />
-            ))}
-          </datalist>
+          <Autocomplete
+            items={municipiosSugeridos}
+            value={municipio}
+            onValueChange={setMunicipio}
+            filter={coincideMunicipio}
+            openOnInputClick
+          >
+            <AutocompleteInput
+              id="municipio"
+              name="municipio"
+              autoComplete="off"
+              placeholder="Escribe o elige tu municipio…"
+              required
+              className="h-12 rounded-xl px-4"
+              {...propsError("municipio")}
+            />
+            <AutocompleteContent>
+              <AutocompleteEmpty>Puedes escribir cualquier municipio de Jalisco.</AutocompleteEmpty>
+              <AutocompleteList>
+                {(opcion: string) => (
+                  <AutocompleteItem key={opcion} value={opcion}>
+                    <MapPinIcon aria-hidden />
+                    {opcion}
+                  </AutocompleteItem>
+                )}
+              </AutocompleteList>
+            </AutocompleteContent>
+          </Autocomplete>
         </Campo>
       </FieldGroup>
 
