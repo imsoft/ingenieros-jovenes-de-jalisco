@@ -6,7 +6,18 @@ export async function proxy(request: NextRequest) {
   return actualizarSesion(request)
 }
 
-// Solo el panel usa sesión; el sitio público no paga el costo del proxy.
+// Solo las zonas con sesión (panel y red de miembros) pagan el costo del proxy.
 export const config = {
-  matcher: ["/panel", "/panel/:path*"],
+  matcher: [
+    "/panel",
+    "/panel/:path*",
+    "/miembros",
+    "/miembros/:path*",
+    "/mi-perfil",
+    "/mi-perfil/:path*",
+    "/ingresar",
+    "/registro",
+    "/restablecer",
+    "/acceso-restringido",
+  ],
 }

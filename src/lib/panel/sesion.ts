@@ -53,3 +53,10 @@ export async function exigirMiembroConsejo(): Promise<MiembroConsejo> {
   if (acceso.tipo === "sin-acceso") redirect("/panel/sin-acceso")
   return acceso.miembro
 }
+
+// Para acciones exclusivas de administradores. La base de datos también lo exige (privado.es_admin_consejo).
+export async function exigirAdminConsejo(): Promise<MiembroConsejo> {
+  const miembro = await exigirMiembroConsejo()
+  if (miembro.rol !== "admin") redirect("/panel")
+  return miembro
+}

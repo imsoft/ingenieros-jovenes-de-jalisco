@@ -105,3 +105,19 @@ Sitio web del **Colectivo de Ingenieros Jóvenes de Jalisco A.C.** (fundado el 1
 - Gestor de paquetes: **pnpm** fijado en `package.json` (`packageManager`). No usar npm ni yarn para dependencias.
 - **TypeScript 6.0** y **ESLint 9** a propósito: `typescript-eslint` exige `typescript <6.1` y `eslint-plugin-react` (vía `eslint-config-next`) no soporta ESLint 10. No actualizarlos sin comprobar que `pnpm lint` siga funcionando.
 - Verificación: ver skill `correr-y-verificar`.
+
+## Correo y pruebas
+
+- Correos de la app: plantilla pura en `src/lib/correo/plantillas.ts` (escapa todo dato con `escaparHtml`, recibe `obtenerUrlSitio()`), envío con `enviarCorreo` dentro de `after()` para no bloquear la respuesta. `enviarCorreo` nunca lanza y no envía nada sin `RESEND_API_KEY`/`CORREO_REMITENTE`.
+- Todos los correos comparten `envolver()` (logo `public/brand/logo-correo.png`, colores, lema). Las plantillas de Supabase se GENERAN desde `src/lib/correo/plantillas-autenticacion.ts` con `pnpm correos:supabase`; nunca editar `supabase/plantillas/*.html` a mano (una prueba lo detecta).
+- Correos de autenticación: HTML en `supabase/plantillas/`, enlaces a `{{ .SiteURL }}/auth/confirm?token_hash=…&type=…&siguiente=…` (verifyOtp, sirve en otro dispositivo). Google usa `/auth/callback` (PKCE).
+- Nunca escribir un dominio fijo en el código: todo sale de `NEXT_PUBLIC_SITE_URL` (ver `docs/puesta-en-marcha.md`).
+- Pruebas con Vitest (`pnpm test`), archivos `*.test.ts` junto al módulo. Toda validación, plantilla o helper nuevo lleva su prueba.
+
+## Red de miembros y componentes de UI
+
+- Usar primitivas de shadcn antes que marcado propio: `Alert` (vía `Aviso` de `src/components/sitio/aviso.tsx`, tipos `error`/`exito`/`advertencia`), `Avatar` (vía `AvatarMiembro`, que usa `getImageProps` de next/image para no perder la optimización), `Switch`, `Checkbox`, `RadioGroup` (tarjetas de opción con `FieldLabel` > `Field`), `InputGroup`, `Empty`, `Skeleton` (en `loading.tsx`), `DropdownMenu`, `Separator`.
+- `Switch`/`Checkbox`: la etiqueta apunta con `htmlFor`, **no** los envuelve (envolverlos alterna dos veces). Envían `"on"` como un checkbox nativo.
+- Grids de tarjetas: `grid-cols-1` explícito y `min-w-0` en los hijos; si no, un texto con `truncate` desborda la pantalla en móvil.
+- El encabezado conoce la sesión pidiendo `/auth/sesion` desde el navegador solo si existe la cookie `*-auth-token`: las páginas públicas siguen estáticas.
+- Pruebas de permisos SQL: `pnpm test:db` (Postgres local desechable, `supabase/pruebas/`). Toda política o función nueva lleva su escenario.

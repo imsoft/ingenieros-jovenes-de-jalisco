@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ArrowRightIcon, MenuIcon, UserRoundIcon } from "lucide-react"
+import { ArrowRightIcon, MenuIcon, UserRoundIcon, UsersRoundIcon } from "lucide-react"
 import { cn } from "cn"
 
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -17,6 +17,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { MenuCuenta, useSesionEncabezado } from "@/components/sitio/menu-cuenta"
 import { navegacion, sitio } from "@/content/sitio"
 
 export function Encabezado() {
@@ -24,6 +25,7 @@ export function Encabezado() {
   const enInicio = ruta === "/"
   const [conScroll, setConScroll] = useState(false)
   const [seccionActiva, setSeccionActiva] = useState<string | null>(null)
+  const sesion = useSesionEncabezado()
 
   useEffect(() => {
     const alDesplazar = () => setConScroll(window.scrollY > 8)
@@ -101,20 +103,12 @@ export function Encabezado() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link
-            href="/panel"
-            prefetch={false}
-            className={cn(
-              buttonVariants({ variant: "ghost" }),
-              "hidden h-10 gap-2 px-3 text-azul hover:bg-azul/5 hover:text-azul sm:inline-flex"
-            )}
-          >
-            <UserRoundIcon aria-hidden />
-            <span className="sr-only xl:not-sr-only">Ingresar</span>
-          </Link>
-          <Link href="/#unete" className={cn(buttonVariants({ variant: "acento" }), "hidden h-10 px-4 sm:inline-flex")}>
-            Únete
-          </Link>
+          <MenuCuenta sesion={sesion} />
+          {sesion?.esMiembro ? null : (
+            <Link href="/#unete" className={cn(buttonVariants({ variant: "acento" }), "hidden h-10 px-4 sm:inline-flex")}>
+              Únete
+            </Link>
+          )}
 
           <Sheet>
             <SheetTrigger render={<Button variant="ghost" size="icon-lg" className="text-azul lg:hidden" />}>
@@ -148,22 +142,35 @@ export function Encabezado() {
               </nav>
 
               <div className="mt-auto flex flex-col gap-4 border-t border-azul/10 p-5">
-                <SheetClose
-                  render={<Link href="/#unete" />}
-                  nativeButton={false}
-                  className={cn(buttonVariants({ variant: "acento", size: "xl" }), "w-full")}
-                >
-                  Quiero ser miembro
-                  <ArrowRightIcon data-icon="inline-end" aria-hidden />
-                </SheetClose>
-                <SheetClose
-                  render={<Link href="/panel" prefetch={false} />}
-                  nativeButton={false}
-                  className={cn(buttonVariants({ variant: "outline", size: "xl" }), "w-full text-azul")}
-                >
-                  <UserRoundIcon data-icon="inline-start" aria-hidden />
-                  Acceso Consejo
-                </SheetClose>
+                {sesion?.esMiembro ? (
+                  <SheetClose
+                    render={<Link href="/miembros" />}
+                    nativeButton={false}
+                    className={cn(buttonVariants({ variant: "acento", size: "xl" }), "w-full")}
+                  >
+                    <UsersRoundIcon data-icon="inline-start" aria-hidden />
+                    Ir a la red de miembros
+                  </SheetClose>
+                ) : (
+                  <>
+                    <SheetClose
+                      render={<Link href="/#unete" />}
+                      nativeButton={false}
+                      className={cn(buttonVariants({ variant: "acento", size: "xl" }), "w-full")}
+                    >
+                      Quiero ser miembro
+                      <ArrowRightIcon data-icon="inline-end" aria-hidden />
+                    </SheetClose>
+                    <SheetClose
+                      render={<Link href={sesion ? "/acceso-restringido" : "/ingresar"} prefetch={false} />}
+                      nativeButton={false}
+                      className={cn(buttonVariants({ variant: "outline", size: "xl" }), "w-full text-azul")}
+                    >
+                      <UserRoundIcon data-icon="inline-start" aria-hidden />
+                      {sesion ? "Mi cuenta" : "Ingresar a la red"}
+                    </SheetClose>
+                  </>
+                )}
                 <p className="text-center text-sm text-muted-foreground">
                   Síguenos en{" "}
                   <a href={sitio.redes.instagram} target="_blank" rel="noopener noreferrer" className="font-medium text-azul underline">

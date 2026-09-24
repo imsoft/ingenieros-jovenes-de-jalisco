@@ -4,56 +4,53 @@ Guía para quien administre el acceso al panel de solicitudes del Colectivo.
 
 - **Dirección:** `/panel` del sitio (por ejemplo, `https://ingenieros-jovenes-de-jalisco.vercel.app/panel`).
 - **Qué permite:** ver las solicitudes de afiliación, filtrarlas por estado, buscarlas, contactar por WhatsApp o correo, aprobarlas, rechazarlas o regresarlas a pendiente, y guardar notas internas.
-- **Quién entra:** solo integrantes activos del Consejo dados de alta aquí. No existe registro público.
+- **Quién entra:** solo integrantes activos del Consejo. Se agregan desde el propio panel (**Consejo**, solo administradores).
 
-## 1. Preparación (una sola vez)
+## 1. Roles
 
-1. En Supabase → **SQL Editor**, ejecuta `supabase/migrations/20260915000000_panel_consejo.sql`.
-2. En Supabase → **Authentication → Sign In / Providers**, desactiva **Allow new users to sign up**. El panel ya bloquea a cualquier cuenta que no sea del Consejo, pero así nadie más puede crear cuentas.
+| | Revisor | Administrador |
+| --- | :---: | :---: |
+| Ver, aprobar, rechazar y anotar solicitudes | ✓ | ✓ |
+| Crear, editar y publicar eventos; subir fotos | ✓ | ✓ |
+| Ver registros a eventos, marcar pagos, exportar CSV | ✓ | ✓ |
+| Usar la red de miembros | ✓ | ✓ |
+| **Eliminar eventos** | | ✓ |
+| **Agregar, cambiar de rol y dar de baja integrantes del Consejo** | | ✓ |
+| **Ocultar perfiles inapropiados del directorio (moderación)** | | ✓ |
 
-## 2. Dar acceso a un integrante
+Nadie puede editar los datos que envió un solicitante ni borrar solicitudes o registros. El Consejo nunca se queda sin administradores: la base de datos impide quitarle el rol o dar de baja al último administrador activo.
 
-1. Supabase → **Authentication → Users → Add user → Create new user**.
-   - Escribe su correo y una contraseña temporal.
-   - Marca **Auto Confirm User**.
-2. Supabase → **SQL Editor**, cambia el correo, el nombre y el rol, y ejecuta:
+## 2. Primer administrador (una sola vez)
+
+Aplica las migraciones (ver `docs/puesta-en-marcha.md`). Luego, el primer administrador crea su cuenta en `/registro` (con un correo autorizado, ver `docs/red-de-miembros.md`) y se le da el rol desde **SQL Editor**:
 
 ```sql
 insert into public.miembros_consejo (usuario_id, nombre, rol)
-select id, 'Nombre Apellido', 'admin'   -- 'admin' o 'revisor'
+select id, 'Nombre Apellido', 'admin'
 from auth.users
-where email = 'correo@ejemplo.com';
+where email = 'correo@ejemplo.com'
+on conflict (usuario_id) do update set rol = 'admin', activo = true
+returning *;
 ```
 
-3. Comparte la dirección del panel y la contraseña temporal por un medio privado.
+Si no devuelve ninguna fila, el correo no coincide con ninguna cuenta. A partir de ahí, todo se hace desde el panel.
 
-**Roles**
+## 3. Agregar integrantes
 
-| Rol | Hoy puede |
-| --- | --- |
-| `admin` | Todo lo del panel. Reservado para futuras funciones de administración (gestionar miembros, eventos). |
-| `revisor` | Ver y revisar solicitudes. |
+**Panel → Consejo → Agregar integrante**: nombre, correo y rol.
 
-## 3. Quitar el acceso
+- Si esa persona **ya tiene cuenta**, entra al panel de inmediato.
+- Si **no tiene cuenta**, queda como *invitación pendiente* (y recibe un correo, cuando Resend esté configurado). Al crear su cuenta en `/registro` con ese correo, o entrar con Google, pasa a ser integrante con el rol elegido. No necesita tener solicitud de afiliación.
 
-Cuando alguien deja el Consejo, desactívalo (conserva el historial de quién revisó qué):
+## 4. Cambiar rol o quitar el acceso
 
-```sql
-update public.miembros_consejo
-set activo = false
-where usuario_id = (select id from auth.users where email = 'correo@ejemplo.com');
-```
+En **Panel → Consejo**, cada integrante tiene **Hacer administrador/revisor** y **Dar de baja**. Dar de baja quita el acceso de inmediato y conserva el historial de quién revisó qué; se puede **Reactivar** después.
 
-Su sesión deja de tener acceso al panel de inmediato. Si además quieres cerrar su cuenta, elimínala en **Authentication → Users**.
+Para que un integrante pueda eliminar su propia cuenta, primero hay que darlo de baja del Consejo.
 
-## 4. Consultar quién tiene acceso
+## Moderación de perfiles
 
-```sql
-select m.nombre, u.email, m.rol, m.activo, m.created_at
-from public.miembros_consejo m
-join auth.users u on u.id = m.usuario_id
-order by m.activo desc, m.nombre;
-```
+Un administrador puede abrir cualquier perfil del directorio y usar **Ocultar (moderación)**. El perfil deja de verse en el directorio; su dueño lo sigue viendo y editando, pero no puede volver a mostrarlo. Los perfiles ocultos se listan en **Panel → Consejo**, con la opción **Restaurar**.
 
 ## 5. Eventos
 
@@ -93,5 +90,6 @@ Después del evento, sube fotos a la galería: el evento pasa solo a **Eventos a
 
 - Las reglas de acceso viven en la base de datos (RLS): aunque alguien tuviera la llave pública del sitio, no puede leer solicitudes sin ser miembro activo.
 - El público solo puede **crear** solicitudes; no puede verlas, modificarlas ni borrarlas.
-- Los miembros solo pueden cambiar el estado, las notas y los datos de revisión; no pueden alterar los datos del solicitante ni borrar solicitudes.
+- Los integrantes del Consejo solo pueden cambiar el estado, las notas y los datos de revisión; no pueden alterar los datos del solicitante ni borrar solicitudes.
+- Los permisos por rol se prueban con `pnpm test:db` (escenarios en `supabase/pruebas/permisos.sql`).
 - `/panel` no aparece en buscadores.

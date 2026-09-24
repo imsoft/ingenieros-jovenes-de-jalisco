@@ -14,11 +14,12 @@ import { buttonVariants } from "@/components/ui/button"
 import { urlImagenEvento } from "@/lib/eventos/formato"
 import { valoresDesdeEvento } from "@/lib/eventos/formulario"
 import { obtenerEventoPanel } from "@/lib/panel/eventos"
+import { exigirMiembroConsejo } from "@/lib/panel/sesion"
 
 export const metadata: Metadata = { title: "Editar evento" }
 
 export default async function EditarEvento({ params, searchParams }: PageProps<"/panel/eventos/[id]">) {
-  const [{ id }, { creado }] = await Promise.all([params, searchParams])
+  const [{ id }, { creado }, miembro] = await Promise.all([params, searchParams, exigirMiembroConsejo()])
   const evento = await obtenerEventoPanel(id)
   if (!evento) notFound()
 
@@ -120,26 +121,28 @@ export default async function EditarEvento({ params, searchParams }: PageProps<"
             ) : null}
           </section>
 
-          <section aria-labelledby="titulo-eliminar" className="rounded-3xl bg-white p-6 ring-1 ring-destructive/20">
-            <h2 id="titulo-eliminar" className="font-heading text-lg font-semibold text-destructive uppercase">
-              Eliminar evento
-            </h2>
-            <p className="mt-1 mb-4 text-sm text-muted-foreground">
-              Solo se pueden eliminar eventos sin registros. Si ya tiene registros, despublícalo para ocultarlo.
-            </p>
-            <BotonConfirmar
-              accion={eliminarEvento.bind(null, evento.id)}
-              titulo="¿Eliminar este evento?"
-              descripcion="Se borrarán el evento, su portada y sus fotos. Esta acción no se puede deshacer."
-              textoConfirmar="Eliminar evento"
-              variant="destructive"
-              size="lg"
-              className="h-10"
-            >
-              <Trash2Icon data-icon="inline-start" aria-hidden />
-              Eliminar evento
-            </BotonConfirmar>
-          </section>
+          {miembro.rol === "admin" ? (
+            <section aria-labelledby="titulo-eliminar" className="rounded-3xl bg-white p-6 ring-1 ring-destructive/20">
+              <h2 id="titulo-eliminar" className="font-heading text-lg font-semibold text-destructive uppercase">
+                Eliminar evento
+              </h2>
+              <p className="mt-1 mb-4 text-sm text-muted-foreground">
+                Solo se pueden eliminar eventos sin registros. Si ya tiene registros, despublícalo para ocultarlo.
+              </p>
+              <BotonConfirmar
+                accion={eliminarEvento.bind(null, evento.id)}
+                titulo="¿Eliminar este evento?"
+                descripcion="Se borrarán el evento, su portada y sus fotos. Esta acción no se puede deshacer."
+                textoConfirmar="Eliminar evento"
+                variant="destructive"
+                size="lg"
+                className="h-10"
+              >
+                <Trash2Icon data-icon="inline-start" aria-hidden />
+                Eliminar evento
+              </BotonConfirmar>
+            </section>
+          ) : null}
         </div>
       </div>
     </div>

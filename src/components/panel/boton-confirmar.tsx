@@ -30,6 +30,7 @@ export function BotonConfirmar({
   variant,
   size,
   className,
+  variantConfirmar = "destructive",
 }: {
   accion: () => Promise<ResultadoAccion>
   titulo: string
@@ -37,6 +38,7 @@ export function BotonConfirmar({
   textoConfirmar: string
   etiqueta?: string
   children: React.ReactNode
+  variantConfirmar?: "destructive" | "default"
 } & Pick<React.ComponentProps<typeof Button>, "variant" | "size" | "className">) {
   const [abierto, setAbierto] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -79,7 +81,7 @@ export function BotonConfirmar({
         ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pendiente}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" disabled={pendiente} onClick={confirmar}>
+          <AlertDialogAction variant={variantConfirmar} disabled={pendiente} onClick={confirmar}>
             {pendiente ? <Spinner data-icon="inline-start" /> : null}
             {textoConfirmar}
           </AlertDialogAction>

@@ -155,7 +155,8 @@ export async function guardarEvento(
 }
 
 export async function eliminarEvento(eventoId: string): Promise<Resultado> {
-  await exigirMiembroConsejo()
+  const miembro = await exigirMiembroConsejo()
+  if (miembro.rol !== "admin") return { ok: false, mensaje: "Solo un administrador puede eliminar eventos." }
   if (!esUuid(eventoId)) return { ok: false, mensaje: "Evento no válido." }
 
   const supabase = await crearClienteSupabaseConSesion()

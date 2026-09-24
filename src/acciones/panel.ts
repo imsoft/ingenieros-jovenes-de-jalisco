@@ -2,9 +2,13 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { after } from "next/server"
 
+import { enviarCorreo } from "@/lib/correo/enviar"
+import { correoSolicitudAprobada } from "@/lib/correo/plantillas"
 import { exigirMiembroConsejo } from "@/lib/panel/sesion"
 import { crearClienteSupabaseConSesion } from "@/lib/supabase/sesion"
+import { obtenerUrlSitio } from "@/lib/url-sitio"
 import {
   esquemaIngreso,
   esquemaRevision,
@@ -84,6 +88,12 @@ export async function revisarSolicitud(
   const regresaAPendiente = decision === "pendiente"
 
   const supabase = await crearClienteSupabaseConSesion()
+  const { data: previa } = await supabase
+    .from("solicitudes_afiliacion")
+    .select("estado")
+    .eq("id", resultado.data.id)
+    .maybeSingle()
+
   const { data, error } = await supabase
     .from("solicitudes_afiliacion")
     .update({
@@ -93,7 +103,7 @@ export async function revisarSolicitud(
       revisado_en: regresaAPendiente ? null : new Date().toISOString(),
     })
     .eq("id", resultado.data.id)
-    .select("id")
+    .select("id, nombre, correo")
 
   if (error) {
     if (error.code === "23505") {
@@ -109,6 +119,14 @@ export async function revisarSolicitud(
   // Sin filas afectadas: la solicitud no existe o RLS lo impidió.
   if (!data?.length) {
     return { tipo: "error", mensaje: "No encontramos la solicitud o ya no tienes permiso para revisarla." }
+  }
+
+  // Solo al pasar a aprobada (no al volver a guardar una ya aprobada) se da la bienvenida.
+  const solicitud = data[0]
+  if (decision === "aprobada" && previa?.estado !== "aprobada") {
+    after(() =>
+      enviarCorreo(solicitud.correo, correoSolicitudAprobada({ nombre: solicitud.nombre }, obtenerUrlSitio().toString()))
+    )
   }
 
   revalidatePath("/panel", "layout")

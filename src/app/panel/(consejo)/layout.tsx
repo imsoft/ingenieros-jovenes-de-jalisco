@@ -25,7 +25,7 @@ export default async function LayoutConsejo({ children }: { children: React.Reac
             </span>
           </Link>
 
-          <NavegacionPanel className="hidden md:flex" />
+          <NavegacionPanel className="hidden md:flex" esAdmin={miembro.rol === "admin"} />
 
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
@@ -41,7 +41,7 @@ export default async function LayoutConsejo({ children }: { children: React.Reac
           </div>
         </div>
         <div className="border-t border-azul/10 md:hidden">
-          <NavegacionPanel className="mx-auto max-w-6xl overflow-x-auto px-3 py-2" />
+          <NavegacionPanel className="mx-auto max-w-6xl overflow-x-auto px-3 py-2" esAdmin={miembro.rol === "admin"} />
         </div>
       </header>
 

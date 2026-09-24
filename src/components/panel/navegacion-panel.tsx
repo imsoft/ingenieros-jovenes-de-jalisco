@@ -1,22 +1,30 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { CalendarDaysIcon, ExternalLinkIcon, InboxIcon, LayoutDashboardIcon } from "lucide-react"
+import { CalendarDaysIcon, ExternalLinkIcon, InboxIcon, LayoutDashboardIcon, ShieldCheckIcon } from "lucide-react"
 import { cn } from "cn"
 
 const enlaces = [
   { href: "/panel", etiqueta: "Resumen", icono: LayoutDashboardIcon, exacto: true },
   { href: "/panel/solicitudes", etiqueta: "Solicitudes", icono: InboxIcon, exacto: false },
   { href: "/panel/eventos", etiqueta: "Eventos", icono: CalendarDaysIcon, exacto: false },
+  { href: "/panel/consejo", etiqueta: "Consejo", icono: ShieldCheckIcon, exacto: false, soloAdmin: true },
 ] as const
 
-export function NavegacionPanel({ className }: { className?: string }) {
+export function NavegacionPanel({ className, esAdmin }: { className?: string; esAdmin: boolean }) {
   const ruta = usePathname()
+  const navRef = useRef<HTMLElement>(null)
+
+  // En móvil el menú se desplaza de lado: asegura que la sección actual quede a la vista.
+  useEffect(() => {
+    navRef.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: "nearest", inline: "nearest" })
+  }, [ruta])
 
   return (
-    <nav aria-label="Secciones del panel" className={cn("flex items-center gap-1", className)}>
-      {enlaces.map(({ href, etiqueta, icono: Icono, exacto }) => {
+    <nav ref={navRef} aria-label="Secciones del panel" className={cn("flex items-center gap-1", className)}>
+      {enlaces.filter((enlace) => esAdmin || !("soloAdmin" in enlace)).map(({ href, etiqueta, icono: Icono, exacto }) => {
         const activo = exacto ? ruta === href : ruta.startsWith(href)
         return (
           <Link

@@ -1,10 +1,19 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-const RUTAS_PUBLICAS_DEL_PANEL = ["/panel/ingresar"]
+// Rutas que requieren sesión y a qué pantalla de ingreso mandan si no la hay.
+const RUTAS_PROTEGIDAS: { prefijo: string; ingreso: string; publicas?: string[] }[] = [
+  { prefijo: "/panel", ingreso: "/panel/ingresar", publicas: ["/panel/ingresar"] },
+  { prefijo: "/miembros", ingreso: "/ingresar" },
+  { prefijo: "/mi-perfil", ingreso: "/ingresar" },
+]
 
-// Refresca la sesión de Supabase y hace la verificación optimista de acceso al panel.
-// La autorización real (miembro activo del Consejo) se valida en el servidor y en RLS.
+function reglaPara(ruta: string) {
+  return RUTAS_PROTEGIDAS.find(({ prefijo }) => ruta === prefijo || ruta.startsWith(`${prefijo}/`))
+}
+
+// Refresca la sesión de Supabase y hace la verificación optimista de acceso.
+// La autorización real (miembro, Consejo) se valida en el servidor y en RLS.
 export async function actualizarSesion(request: NextRequest) {
   let respuesta = NextResponse.next({ request })
 
@@ -30,11 +39,13 @@ export async function actualizarSesion(request: NextRequest) {
   const conSesion = Boolean(data?.claims?.sub)
 
   const ruta = request.nextUrl.pathname
-  if (!conSesion && !RUTAS_PUBLICAS_DEL_PANEL.includes(ruta)) {
+  const regla = reglaPara(ruta)
+
+  if (!conSesion && regla && !regla.publicas?.includes(ruta)) {
     const destino = request.nextUrl.clone()
-    destino.pathname = "/panel/ingresar"
+    destino.pathname = regla.ingreso
     destino.search = ""
-    if (ruta !== "/panel") destino.searchParams.set("siguiente", ruta)
+    if (ruta !== regla.prefijo || regla.prefijo !== "/panel") destino.searchParams.set("siguiente", ruta)
 
     const redireccion = NextResponse.redirect(destino)
     respuesta.cookies.getAll().forEach((cookie) => redireccion.cookies.set(cookie))

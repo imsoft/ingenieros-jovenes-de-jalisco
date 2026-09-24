@@ -1,13 +1,17 @@
 "use server"
 
+import { after } from "next/server"
 import { z } from "zod"
 
+import { correosDelConsejo, enviarCorreo } from "@/lib/correo/enviar"
+import { correoNuevaSolicitud } from "@/lib/correo/plantillas"
 import { crearClienteSupabasePublico } from "@/lib/supabase/servidor"
 import {
   esquemaSolicitudAfiliacion,
   type EstadoFormularioAfiliacion,
   type ValoresAfiliacion,
 } from "@/lib/validaciones/afiliacion"
+import { obtenerUrlSitio } from "@/lib/url-sitio"
 
 function textoDe(formData: FormData, campo: string) {
   const valor = formData.get(campo)
@@ -89,6 +93,15 @@ export async function enviarSolicitudAfiliacion(
       valores,
     }
   }
+
+  // Aviso al Consejo después de responder, para no hacer esperar al solicitante.
+  after(() =>
+    enviarCorreo(
+      correosDelConsejo(),
+      correoNuevaSolicitud({ nombre, correo, telefono, municipio }, obtenerUrlSitio().toString()),
+      { responderA: correo }
+    )
+  )
 
   return { tipo: "exito", nombre }
 }

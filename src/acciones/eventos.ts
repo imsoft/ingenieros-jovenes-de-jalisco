@@ -1,8 +1,13 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { after } from "next/server"
 import { z } from "zod"
 
+import { enviarCorreo } from "@/lib/correo/enviar"
+import { correoRegistroEvento } from "@/lib/correo/plantillas"
+import { formatearFechaLarga, formatearHorario, formatearPrecio } from "@/lib/eventos/formato"
+import { obtenerEventoPorSlug } from "@/lib/eventos/publico"
 import { crearClienteSupabasePublico } from "@/lib/supabase/servidor"
 import {
   esquemaRegistroEvento,
@@ -10,6 +15,7 @@ import {
   type EstadoRegistroEvento,
   type ValoresRegistroEvento,
 } from "@/lib/validaciones/eventos"
+import { obtenerUrlSitio } from "@/lib/url-sitio"
 
 function textoDe(formData: FormData, campo: string) {
   const valor = formData.get(campo)
@@ -104,10 +110,39 @@ export async function registrarseEnEvento(
   revalidatePath("/eventos")
   revalidatePath("/")
 
+  const monto = Number(data.monto)
+  after(async () => {
+    const evento = await obtenerEventoPorSlug(slug)
+    if (!evento) return
+    await enviarCorreo(
+      correo,
+      correoRegistroEvento(
+        {
+          nombre,
+          folio: data.folio,
+          evento: {
+            titulo: evento.titulo,
+            slug: evento.slug,
+            fecha: formatearFechaLarga(evento.inicia_en),
+            horario: formatearHorario(evento),
+            lugar: evento.lugar,
+            direccion: evento.direccion,
+          },
+          monto: formatearPrecio(monto),
+          esGratis: monto === 0,
+          esMiembro: data.es_miembro,
+          instrucciones: data.instrucciones_pago,
+        },
+        obtenerUrlSitio().toString()
+      ),
+      { idempotencia: `registro-${data.folio}` }
+    )
+  })
+
   return {
     tipo: "exito",
     folio: data.folio,
-    monto: Number(data.monto),
+    monto,
     esMiembro: data.es_miembro,
     instrucciones: data.instrucciones_pago,
   }

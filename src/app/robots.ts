@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
   }
 
   return {
-    rules: { userAgent: "*", allow: "/", disallow: "/panel" },
+    rules: { userAgent: "*", allow: "/", disallow: ["/panel", "/miembros", "/mi-perfil", "/auth"] },
     sitemap: new URL("/sitemap.xml", url).toString(),
     host: url.origin,
   }
