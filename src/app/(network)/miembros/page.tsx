@@ -1,22 +1,35 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowRightIcon, BriefcaseBusinessIcon, MapPinIcon, SearchIcon, SearchXIcon, UserRoundPlusIcon, UsersRoundIcon } from "lucide-react"
+import { ArrowRightIcon, BriefcaseBusinessIcon, MapPinIcon, SearchXIcon, UserRoundPlusIcon, UsersRoundIcon } from "lucide-react"
 
+import { DirectoryFilters } from "@/components/members/directory-filters"
 import { MemberAvatar } from "@/components/members/member-avatar"
 import { buttonVariants } from "@/components/ui/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
-import { getProfile, getProfilePhotoUrl, listDirectory } from "@/lib/members/profiles"
+import { listVisibleCompanies } from "@/lib/members/companies"
+import { distinctValues, filterDirectory, groupByUser, type DirectoryFilters as Filters } from "@/lib/members/directory"
+import { getProfile, getProfilePhotoUrl, listDirectoryProfiles } from "@/lib/members/profiles"
 import { requireMember } from "@/lib/members/session"
+
+const readParam = (value: string | string[] | undefined) => (typeof value === "string" && value.trim() ? value.slice(0, 80) : undefined)
 
 export const metadata: Metadata = { title: "Directorio de miembros" }
 
 export default async function MembersPage({ searchParams }: PageProps<"/miembros">) {
   const member = await requireMember("/miembros")
-  const { q } = await searchParams
-  const search = typeof q === "string" ? q.slice(0, 80) : ""
+  const params = await searchParams
+  const filters: Filters = {
+    q: readParam(params.q),
+    specialty: readParam(params.specialty),
+    sector: readParam(params.sector),
+    municipality: readParam(params.municipality),
+  }
+  const isFiltered = Object.values(filters).some(Boolean)
 
-  const [{ profiles, total }, myProfile] = await Promise.all([listDirectory(search), getProfile(member.userId)])
+  const [allProfiles, companies, myProfile] = await Promise.all([listDirectoryProfiles(), listVisibleCompanies(), getProfile(member.userId)])
+  const profiles = filterDirectory(allProfiles, companies, filters)
+  const companiesByUser = groupByUser(companies)
+  const total = allProfiles.length
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
@@ -28,22 +41,26 @@ export default async function MembersPage({ searchParams }: PageProps<"/miembros
             {total === 1 ? "1 miembro" : `${total} miembros`} del Colectivo. Conócelos y conecta.
           </p>
         </div>
-        <form role="search" className="w-full md:max-w-sm">
-          <label htmlFor="member-search" className="sr-only">
-            Buscar miembros
-          </label>
-          <InputGroup className="h-11 rounded-xl bg-white">
-            <InputGroupAddon>
-              <SearchIcon aria-hidden />
-            </InputGroupAddon>
-            <InputGroupInput id="member-search" name="q" type="search" defaultValue={search} placeholder="Nombre, empresa, especialidad…" />
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton type="submit" variant="secondary" size="sm" className="rounded-lg">
-                Buscar
-              </InputGroupButton>
-            </InputGroupAddon>
-          </InputGroup>
-        </form>
+
+      </div>
+
+      <div className="mt-6">
+        <DirectoryFilters
+          action="/miembros"
+          filters={filters}
+          searchLabel="Buscar miembros"
+          searchPlaceholder="Nombre, empresa, servicio…"
+          selects={[
+            { name: "specialty", label: "Especialidad", allLabel: "Todas", options: distinctValues(allProfiles.map((profile) => profile.specialty)) },
+            { name: "sector", label: "Giro", allLabel: "Todos", options: distinctValues(companies.map((company) => company.sector)) },
+            {
+              name: "municipality",
+              label: "Municipio",
+              allLabel: "Todos",
+              options: distinctValues([...allProfiles.map((profile) => profile.municipality), ...companies.map((company) => company.municipality)]),
+            },
+          ]}
+        />
       </div>
 
       {!myProfile ? (
@@ -66,7 +83,9 @@ export default async function MembersPage({ searchParams }: PageProps<"/miembros
 
       {profiles.length > 0 ? (
         <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {profiles.map((profile) => (
+          {profiles.map((profile) => {
+            const company = companiesByUser.get(profile.user_id)?.[0]
+            return (
             <li key={profile.user_id} className="min-w-0">
               <Link
                 href={`/miembros/${profile.user_id}`}
@@ -83,10 +102,10 @@ export default async function MembersPage({ searchParams }: PageProps<"/miembros
                 </div>
                 {profile.headline ? <p className="line-clamp-2 text-sm leading-relaxed text-foreground/80">{profile.headline}</p> : null}
                 <div className="mt-auto flex flex-col gap-1.5 text-sm text-foreground/70">
-                  {profile.company ? (
+                  {company ? (
                     <span className="flex items-center gap-2">
                       <BriefcaseBusinessIcon className="size-4 shrink-0 text-brand-orange" aria-hidden />
-                      <span className="truncate">{[profile.job_title, profile.company].filter(Boolean).join(" · ")}</span>
+                      <span className="truncate">{[company.job_title, company.name].filter(Boolean).join(" · ")}</span>
                     </span>
                   ) : null}
                   {profile.municipality ? (
@@ -98,24 +117,25 @@ export default async function MembersPage({ searchParams }: PageProps<"/miembros
                 </div>
               </Link>
             </li>
-          ))}
+            )
+          })}
         </ul>
       ) : (
         <Empty className="mt-8 rounded-3xl border border-brand-blue/20 py-16">
           <EmptyHeader>
             <EmptyMedia variant="icon" className="size-12 rounded-full bg-brand-blue/10 text-brand-blue [&_svg:not([class*='size-'])]:size-6">
-              {search ? <SearchXIcon aria-hidden /> : <UsersRoundIcon aria-hidden />}
+              {isFiltered ? <SearchXIcon aria-hidden /> : <UsersRoundIcon aria-hidden />}
             </EmptyMedia>
             <EmptyTitle className="font-heading text-xl text-brand-blue uppercase">
-              {search ? "Sin resultados" : "El directorio está por llenarse"}
+              {isFiltered ? "Sin resultados" : "El directorio está por llenarse"}
             </EmptyTitle>
             <EmptyDescription>
-              {search ? `Nadie coincide con “${search}”. Prueba con otra palabra.` : "Sé de los primeros en crear tu perfil."}
+              {isFiltered ? "Nadie coincide con esos filtros. Prueba con otros." : "Sé de los primeros en crear tu perfil."}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Link href={search ? "/miembros" : "/mi-perfil"} className={buttonVariants({ variant: "outline" })}>
-              {search ? "Ver a todos" : "Crear mi perfil"}
+            <Link href={isFiltered ? "/miembros" : "/mi-perfil"} className={buttonVariants({ variant: "outline" })}>
+              {isFiltered ? "Ver a todos" : "Crear mi perfil"}
             </Link>
           </EmptyContent>
         </Empty>

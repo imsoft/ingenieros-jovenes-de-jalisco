@@ -14,12 +14,12 @@ const admin = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistS
 const newPassword = () => randomBytes(12).toString("base64url")
 
 const members = [
-  { email: "sofia@cijj.test", fullName: "Sofía Ramírez Castellanos", specialty: "Ingeniería civil", headline: "Superviso obra de infraestructura hidráulica para el SIAPA", company: "Constructora Occidente", jobTitle: "Residente de obra", municipality: "Guadalajara", photo: 1, bio: "Me apasiona la infraestructura que cambia la vida de las colonias.", linkedinUrl: "https://www.linkedin.com/in/sofia-ramirez", instagramHandle: "sofi.ingeniera", websiteUrl: "https://constructoraoccidente.mx" },
-  { email: "diego@cijj.test", fullName: "Diego Hernández", specialty: "Mecatrónica", headline: "Automatizo líneas de producción en la industria electrónica", company: "Continental Automotive Guadalajara Tech Center", jobTitle: "Ingeniero de automatización Sr.", municipality: "Tlaquepaque", photo: 2 },
-  { email: "valeria@cijj.test", fullName: "Valeria Montes de Oca Villaseñor", specialty: "Ingeniería industrial", headline: "Mejora continua y Lean Six Sigma", company: "Freelance", municipality: "Zapopan", photo: 3 },
-  { email: "luis@cijj.test", fullName: "Luis Ángel Pérez", specialty: "Ingeniería en sistemas", headline: "Desarrollo software para despachos de arquitectura", company: "Estudio Plano", jobTitle: "CTO", municipality: "Tlajomulco de Zúñiga" },
-  { email: "mariana@cijj.test", fullName: "Mariana López", specialty: "Ingeniería ambiental", municipality: "Tonalá", photo: 4 },
-  { email: "jorge@cijj.test", fullName: "Jorge", specialty: "Ingeniería eléctrica", headline: "Instalaciones eléctricas residenciales e industriales", company: "Electro Jorge", jobTitle: "Dueño", municipality: "El Salto" },
+  { email: "sofia@cijj.test", fullName: "Sofía Ramírez Castellanos", specialty: "Ingeniería civil", headline: "Superviso obra de infraestructura hidráulica para el SIAPA", companies: [{ name: "Constructora Occidente", role: "owner", job_title: "Directora", sector: "Construcción e infraestructura", services: ["Obra civil", "Supervisión"], municipality: "Guadalajara" }], contact: { whatsapp: "3311111111", email: "sofia@cijj.test", is_visible: true }, municipality: "Guadalajara", photo: 1, bio: "Me apasiona la infraestructura que cambia la vida de las colonias.", linkedinUrl: "https://www.linkedin.com/in/sofia-ramirez", instagramHandle: "sofi.ingeniera", websiteUrl: "https://constructoraoccidente.mx" },
+  { email: "diego@cijj.test", fullName: "Diego Hernández", specialty: "Mecatrónica", headline: "Automatizo líneas de producción en la industria electrónica", companies: [{ name: "Continental Automotive Guadalajara Tech Center", role: "employee", job_title: "Ingeniero de automatización Sr.", sector: "Automotriz", municipality: "Tlaquepaque" }], contact: { whatsapp: "3322222222", email: null, is_visible: false }, municipality: "Tlaquepaque", photo: 2 },
+  { email: "valeria@cijj.test", fullName: "Valeria Montes de Oca Villaseñor", specialty: "Ingeniería industrial", headline: "Mejora continua y Lean Six Sigma", companies: [{ name: "Consultoría Montes", role: "freelance", sector: "Consultoría e ingeniería", services: ["Lean Six Sigma"] }], municipality: "Zapopan", photo: 3 },
+  { email: "luis@cijj.test", fullName: "Luis Ángel Pérez", specialty: "Ingeniería en sistemas", headline: "Desarrollo software para despachos de arquitectura", companies: [{ name: "Estudio Plano", role: "partner", job_title: "CTO", sector: "Tecnología y software" }], municipality: "Tlajomulco de Zúñiga" },
+  { email: "mariana@cijj.test", fullName: "Mariana López", specialty: "Ingeniería ambiental", municipality: "Tonalá", photo: 4, companies: [{ name: "constructora occidente", role: "employee", job_title: "Gestión ambiental" }] },
+  { email: "jorge@cijj.test", fullName: "Jorge", specialty: "Ingeniería eléctrica", headline: "Instalaciones eléctricas residenciales e industriales", companies: [{ name: "Electro Jorge", role: "owner", sector: "Energía" }], municipality: "El Salto" },
   { email: "hidden@cijj.test", fullName: "Perfil Oculto", specialty: "Química", isVisible: false },
   { email: "no-profile@cijj.test", fullName: null },
   { email: "former@cijj.test", fullName: "Ex Miembro", specialty: "Civil", isFormer: true },
@@ -61,8 +61,6 @@ for (const member of members) {
     full_name: member.fullName,
     headline: member.headline ?? null,
     specialty: member.specialty ?? null,
-    company: member.company ?? null,
-    job_title: member.jobTitle ?? null,
     municipality: member.municipality ?? null,
     bio: member.bio ?? null,
     linkedin_url: member.linkedinUrl ?? null,
@@ -72,6 +70,15 @@ for (const member of members) {
     is_visible: member.isVisible ?? true,
   })
   if (error) throw error
+
+  for (const [index, company] of (member.companies ?? []).entries()) {
+    const { error: companyError } = await admin.from("member_companies").insert({ user_id: accounts.ids[member.email], sort_order: index, ...company })
+    if (companyError) throw companyError
+  }
+  if (member.contact) {
+    const { error: contactError } = await admin.from("profile_contacts").insert({ user_id: accounts.ids[member.email], ...member.contact })
+    if (contactError) throw contactError
+  }
 }
 sql(`update public.membership_applications set status = 'rejected' where email = 'former@cijj.test'`)
 

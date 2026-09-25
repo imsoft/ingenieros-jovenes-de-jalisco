@@ -14,8 +14,6 @@ export const profileSchema = z.object({
   fullName: z.string().trim().min(2, "Escribe tu nombre.").max(120, "Máximo 120 caracteres."),
   headline: optional(160),
   specialty: optional(120),
-  company: optional(120),
-  jobTitle: optional(120),
   municipality: optional(80),
   bio: optional(1000),
   linkedinUrl: z
@@ -43,10 +41,28 @@ export const profileSchema = z.object({
     })
     .transform((value) => value || null),
   isVisible: z.boolean(),
+  // Direct contact, only shown to members when showContact is on.
+  whatsapp: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/[\s().-]/g, ""))
+    .refine((value) => !value || /^\+?\d{10,15}$/.test(value), { message: "Escribe un número de 10 dígitos (o con lada internacional)." })
+    .transform((value) => value || null),
+  contactEmail: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(254, "El correo es demasiado largo.")
+    .refine((value) => !value || z.email().safeParse(value).success, { message: "Escribe un correo válido." })
+    .transform((value) => value || null),
+  showContact: z.boolean(),
   photoPath: z
     .string()
     .trim()
     .transform((value) => value || null),
+}).refine((data) => !data.showContact || data.whatsapp || data.contactEmail, {
+  path: ["showContact"],
+  message: "Agrega tu WhatsApp o tu correo para poder mostrar tu contacto.",
 })
 
 export type ProfileData = z.output<typeof profileSchema>

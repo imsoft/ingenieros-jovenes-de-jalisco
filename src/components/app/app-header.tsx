@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { CalendarDaysIcon, InboxIcon, LayoutDashboardIcon, ShieldCheckIcon, UserRoundPenIcon, UsersRoundIcon } from "lucide-react"
+import { Building2Icon, CalendarDaysIcon, InboxIcon, LayoutDashboardIcon, ShieldCheckIcon, UserRoundPenIcon, UsersRoundIcon } from "lucide-react"
 import { cn } from "cn"
 
 import { AccountDropdown, type AccountSummary } from "@/components/app/account-dropdown"
@@ -11,6 +11,7 @@ import { AccountDropdown, type AccountSummary } from "@/components/app/account-d
 // Icons are referenced by name because server layouts can't pass components to a client component.
 const icons = {
   directory: UsersRoundIcon,
+  companies: Building2Icon,
   profile: UserRoundPenIcon,
   summary: LayoutDashboardIcon,
   applications: InboxIcon,
@@ -18,7 +19,8 @@ const icons = {
   board: ShieldCheckIcon,
 }
 
-export type AppNavItem = { href: string; label: string; icon: keyof typeof icons; exact?: boolean }
+// `exclude` lists sub-paths that belong to another item (e.g. /miembros/empresas is not "Directorio").
+export type AppNavItem = { href: string; label: string; icon: keyof typeof icons; exact?: boolean; exclude?: string[] }
 
 // `compact` (mobile) spreads the sections evenly with the icon above the label, so they all fit without scrolling.
 function AppNav({ items, className, label, compact = false }: { items: AppNavItem[]; className?: string; label: string; compact?: boolean }) {
@@ -26,9 +28,10 @@ function AppNav({ items, className, label, compact = false }: { items: AppNavIte
 
   return (
     <nav aria-label={label} className={cn(compact ? "grid auto-cols-fr grid-flow-col gap-1" : "flex items-center gap-1", className)}>
-      {items.map(({ href, label: itemLabel, icon, exact }) => {
+      {items.map(({ href, label: itemLabel, icon, exact, exclude }) => {
         const Icon = icons[icon]
-        const isActive = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
+        const isExcluded = exclude?.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+        const isActive = !isExcluded && (exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`))
         return (
           <Link
             key={href}

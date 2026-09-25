@@ -26,7 +26,9 @@ async function removeUnusedPhotos(supabase: SessionClient, userId: string, keepP
     return
   }
 
-  const unused = getUnusedPhotoPaths(userId, (files ?? []).map((file) => file.name), keepPath)
+  // Only files: the "companies" subfolder (company logos) shows up in the listing without an id.
+  const names = (files ?? []).filter((file) => file.id).map((file) => file.name)
+  const unused = getUnusedPhotoPaths(userId, names, keepPath)
   if (unused.length === 0) return
 
   const { error: removeError } = await supabase.storage.from(PROFILES_BUCKET).remove(unused)
@@ -71,8 +73,6 @@ export async function saveProfile(_prevState: ProfileFormState, formData: FormDa
     fullName: getText(formData, "fullName"),
     headline: getText(formData, "headline"),
     specialty: getText(formData, "specialty"),
-    company: getText(formData, "company"),
-    jobTitle: getText(formData, "jobTitle"),
     municipality: getText(formData, "municipality"),
     bio: getText(formData, "bio"),
     linkedinUrl: getText(formData, "linkedinUrl"),
@@ -80,6 +80,9 @@ export async function saveProfile(_prevState: ProfileFormState, formData: FormDa
     websiteUrl: getText(formData, "websiteUrl"),
     isVisible: formData.get("isVisible") === "on",
     photoPath: getText(formData, "photoPath"),
+    whatsapp: getText(formData, "whatsapp"),
+    contactEmail: getText(formData, "contactEmail"),
+    showContact: formData.get("showContact") === "on",
   })
 
   if (!result.success) {
@@ -95,8 +98,6 @@ export async function saveProfile(_prevState: ProfileFormState, formData: FormDa
     full_name: data.fullName,
     headline: data.headline,
     specialty: data.specialty,
-    company: data.company,
-    job_title: data.jobTitle,
     municipality: data.municipality,
     bio: data.bio,
     linkedin_url: data.linkedinUrl,
@@ -121,6 +122,17 @@ export async function saveProfile(_prevState: ProfileFormState, formData: FormDa
   if (error) {
     console.error("[profile] Could not save:", error.code, error.message)
     return { status: "error", message: "No pudimos guardar tu perfil. Inténtalo de nuevo.", errors: {} }
+  }
+
+  // Contact lives in its own table so other members only get it when it is shared (RLS).
+  const contact = { whatsapp: data.whatsapp, email: data.contactEmail, is_visible: data.showContact }
+  const { data: previousContact } = await supabase.from("profile_contacts").select("user_id").eq("user_id", member.userId).maybeSingle()
+  const { error: contactError } = previousContact
+    ? await supabase.from("profile_contacts").update(contact).eq("user_id", member.userId)
+    : await supabase.from("profile_contacts").insert({ ...contact, user_id: member.userId })
+  if (contactError) {
+    console.error("[profile] Could not save the contact:", contactError.code, contactError.message)
+    return { status: "error", message: "Guardamos tu perfil, pero no tu contacto. Inténtalo de nuevo.", errors: {} }
   }
 
   await removeUnusedPhotos(supabase, member.userId, data.photoPath)

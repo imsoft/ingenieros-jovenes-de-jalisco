@@ -10,7 +10,7 @@ Zona privada donde los miembros del Colectivo inician sesión (correo/contraseñ
 
 ### 1. Migración
 
-Ejecuta `supabase/migrations/20260924000000_member_network.sql` en el SQL Editor. **Si tu proyecto ya tenía las migraciones anteriores en español**, primero sigue la sección "Migrar la base actual a inglés" de `docs/go-live.md`.
+Ejecuta en el SQL Editor, en orden, `supabase/migrations/20260924000000_member_network.sql` y `supabase/migrations/20260925000000_member_companies_and_contact.sql` (empresas y contacto directo). **Si tu proyecto ya tenía las migraciones anteriores en español**, primero sigue la sección "Migrar la base actual a inglés" de `docs/go-live.md`.
 
 ### 2. Activar el filtro de registro
 
@@ -87,7 +87,9 @@ Sin SMTP propio, Supabase solo envía correos a los miembros del equipo del proy
 
 - Crear cuenta (correo o Google) solo con el correo aprobado.
 - Crear y editar **su** perfil y su foto; ocultarse del directorio.
-- Ver el directorio y los perfiles visibles de otros miembros. Nunca ve correos ni teléfonos: solo los enlaces que cada quien publica.
+- Registrar hasta **5 empresas o emprendimientos**, cada uno con logo, su relación (dueño, socio, colaborador o independiente), puesto, giro, descripción, servicios, municipio y sitio web.
+- Compartir su **contacto directo** (WhatsApp y correo) con los demás miembros, solo si lo activa. Vive en una tabla aparte (`profile_contacts`) para que la base de datos lo oculte aunque alguien consulte directo.
+- Ver el directorio (con filtros por especialidad, giro y municipio), la vista de **Empresas** (quién del Colectivo trabaja en cada una) y los perfiles visibles de otros miembros. Solo ve el WhatsApp o correo de quien decidió compartirlo.
 - **Eliminar su cuenta** desde `/mi-perfil` (borra cuenta, perfil y foto).
 
 Si su solicitud deja de estar aprobada, pierde el acceso y su perfil desaparece del directorio al instante. La moderación de perfiles y los roles del Consejo están en `docs/board-panel.md`.

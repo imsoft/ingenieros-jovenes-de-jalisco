@@ -205,11 +205,14 @@ export async function deleteMyAccount(): Promise<{ ok: false; message: string } 
   const userId = data?.claims?.sub
   if (!userId) redirect("/ingresar")
 
-  const { data: photos } = await supabase.storage.from("profiles").list(userId, { limit: 100 })
-  if (photos?.length) {
-    const { error: photosError } = await supabase.storage
-      .from("profiles")
-      .remove(photos.map((photo) => `${userId}/${photo.name}`))
+  // Profile photos live in {userId}/ and company logos in {userId}/companies/; folders list without an id.
+  const files: string[] = []
+  for (const folder of [userId, `${userId}/companies`]) {
+    const { data } = await supabase.storage.from("profiles").list(folder, { limit: 100 })
+    files.push(...(data ?? []).filter((file) => file.id).map((file) => `${folder}/${file.name}`))
+  }
+  if (files.length > 0) {
+    const { error: photosError } = await supabase.storage.from("profiles").remove(files)
     if (photosError) console.error("[account] Could not delete the photos:", photosError.message)
   }
 

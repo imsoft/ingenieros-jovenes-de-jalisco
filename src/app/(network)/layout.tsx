@@ -10,7 +10,8 @@ export const metadata: Metadata = {
 }
 
 const navItems: AppNavItem[] = [
-  { href: "/miembros", label: "Directorio", icon: "directory" },
+  { href: "/miembros", label: "Directorio", icon: "directory", exclude: ["/miembros/empresas"] },
+  { href: "/miembros/empresas", label: "Empresas", icon: "companies" },
   { href: "/mi-perfil", label: "Mi perfil", icon: "profile" },
 ]
 

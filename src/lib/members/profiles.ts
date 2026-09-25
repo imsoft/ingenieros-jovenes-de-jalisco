@@ -7,8 +7,6 @@ export type Profile = {
   full_name: string
   headline: string | null
   specialty: string | null
-  company: string | null
-  job_title: string | null
   municipality: string | null
   bio: string | null
   linkedin_url: string | null
@@ -21,7 +19,7 @@ export type Profile = {
 }
 
 const COLUMNS =
-  "user_id, full_name, headline, specialty, company, job_title, municipality, bio, linkedin_url, instagram_handle, website_url, photo_path, is_visible, is_suspended, updated_at"
+  "user_id, full_name, headline, specialty, municipality, bio, linkedin_url, instagram_handle, website_url, photo_path, is_visible, is_suspended, updated_at"
 
 export const PROFILES_BUCKET = "profiles"
 
@@ -40,10 +38,8 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return data
 }
 
-const normalize = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-
-// The Collective is small: fetch the whole directory and filter here, ignoring accents and case.
-export async function listDirectory(search?: string): Promise<{ profiles: Profile[]; total: number }> {
+// The Collective is small: the whole directory is fetched and filtered in memory (see lib/members/directory.ts).
+export async function listDirectoryProfiles(): Promise<Profile[]> {
   const supabase = await createSessionSupabaseClient()
   const { data, error } = await supabase
     .from("profiles")
@@ -54,18 +50,5 @@ export async function listDirectory(search?: string): Promise<{ profiles: Profil
     .limit(1000)
 
   if (error) console.error("[members] Could not read the directory:", error.code, error.message)
-  const all = data ?? []
-
-  const terms = normalize(search?.trim() ?? "").split(/\s+/).filter(Boolean)
-  if (terms.length === 0) return { profiles: all, total: all.length }
-
-  const profiles = all.filter((profile) => {
-    const text = normalize(
-      [profile.full_name, profile.headline, profile.specialty, profile.company, profile.job_title, profile.municipality]
-        .filter(Boolean)
-        .join(" ")
-    )
-    return terms.every((term) => text.includes(term))
-  })
-  return { profiles, total: all.length }
+  return data ?? []
 }

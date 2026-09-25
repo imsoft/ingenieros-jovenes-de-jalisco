@@ -174,4 +174,58 @@ select tests.fails($$select public.delete_my_account()$$, 'permission denied', '
 select tests.fails($$select * from public.profiles$$, 'permission denied', 'anonymous cannot read profiles');
 reset role;
 
+-- ---------------------------------------------------------------- companies and contact
+set role authenticated;
+select tests.act_as('00000000-0000-0000-0000-000000000001');
+insert into public.member_companies (user_id, name, role, sector) values (auth.uid(), 'Constructora Uno', 'owner', 'Construcción');
+select tests.ok(true, 'M1 adds a company to their profile');
+select tests.fails($$insert into public.member_companies (user_id, name) values ('00000000-0000-0000-0000-000000000003', 'Fake')$$, 'row-level security', 'M1 cannot add a company to someone else''s profile');
+select tests.fails($$update public.member_companies set user_id = '00000000-0000-0000-0000-000000000003' where user_id = auth.uid()$$, 'permission denied', 'a company cannot be moved to another member')
+;
+insert into public.profile_contacts (user_id, whatsapp, email, is_visible) values (auth.uid(), '3312345678', 'm1@correo.mx', false);
+select tests.ok(exists (select 1 from public.profile_contacts where user_id = auth.uid()), 'M1 sees their own contact');
+
+reset role;
+insert into public.member_companies (user_id, name) values ('00000000-0000-0000-0000-000000000003', 'Empresa del ex miembro');
+set role authenticated;
+
+select tests.act_as('00000000-0000-0000-0000-00000000000a');
+select tests.ok(exists (select 1 from public.member_companies where name = 'Constructora Uno'), 'another member sees the companies of a visible profile');
+select tests.ok(not exists (select 1 from public.member_companies where name = 'Empresa del ex miembro'), 'companies of former members are hidden');
+with u as (update public.member_companies set name = 'Hacked' where name = 'Constructora Uno' returning 1)
+select tests.ok((select count(*) from u) = 0, 'nobody else can edit a member''s company');
+with d as (delete from public.member_companies where name = 'Constructora Uno' returning 1)
+select tests.ok((select count(*) from d) = 0, 'nobody else can delete a member''s company');
+select tests.ok(not exists (select 1 from public.profile_contacts where user_id = '00000000-0000-0000-0000-000000000001'), 'a contact that is not shared stays private');
+
+select tests.act_as('00000000-0000-0000-0000-000000000001');
+update public.profile_contacts set is_visible = true where user_id = auth.uid();
+select tests.act_as('00000000-0000-0000-0000-00000000000a');
+select tests.ok((select whatsapp from public.profile_contacts where user_id = '00000000-0000-0000-0000-000000000001') = '3312345678', 'a shared contact is visible to other members');
+select tests.act_as('00000000-0000-0000-0000-000000000009');
+select tests.ok(not exists (select 1 from public.profile_contacts), 'accounts without membership never see contacts');
+select tests.ok(not exists (select 1 from public.member_companies), 'accounts without membership never see companies');
+
+reset role;
+update public.profiles set is_visible = false where user_id = '00000000-0000-0000-0000-000000000001';
+set role authenticated;
+select tests.act_as('00000000-0000-0000-0000-00000000000a');
+select tests.ok(not exists (select 1 from public.member_companies where name = 'Constructora Uno'), 'hiding the profile also hides its companies');
+select tests.ok(not exists (select 1 from public.profile_contacts where user_id = '00000000-0000-0000-0000-000000000001'), 'and its shared contact');
+reset role;
+update public.profiles set is_visible = true where user_id = '00000000-0000-0000-0000-000000000001';
+
+set role authenticated;
+select tests.act_as('00000000-0000-0000-0000-000000000001');
+insert into public.member_companies (user_id, name) select auth.uid(), 'Empresa ' || n from generate_series(2, 5) n;
+select tests.fails($$insert into public.member_companies (user_id, name) values (auth.uid(), 'Sexta')$$, 'TOO_MANY_COMPANIES', 'a member can have at most 5 companies');
+with d as (delete from public.member_companies where user_id = auth.uid() and name = 'Empresa 5' returning 1)
+select tests.ok((select count(*) from d) = 1, 'a member deletes their own company');
+reset role;
+
+set role anon;
+select tests.fails($$select * from public.member_companies$$, 'permission denied', 'anonymous cannot read companies');
+select tests.fails($$select * from public.profile_contacts$$, 'permission denied', 'anonymous cannot read contacts');
+reset role;
+
 \echo ALL TESTS PASSED

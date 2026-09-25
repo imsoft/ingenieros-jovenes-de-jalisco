@@ -260,6 +260,81 @@ async function boardFlow() {
   check((await path()) === "/panel/consejo", "and enters the panel as an admin", await path())
 }
 
+async function companiesAndContactFlow() {
+  console.log("\nCompanies, contact and directory filters")
+  const userId = accounts.ids["valeria@cijj.test"]
+  await signIn("valeria@cijj.test")
+  await goto("/mi-perfil")
+  check((await textOf("#companies-title + p, section[aria-labelledby=companies-title] h3")).includes("Consultoría Montes"), "the member sees their companies on My profile")
+
+  await clickText("Agregar empresa")
+  await waitFor(`location.pathname === "/mi-perfil/empresas/nueva"`)
+  await browser.waitForLoad()
+  await browser.uploadFile("input[type=file]", fixture("photo-2.png"))
+  check(await waitFor(`document.querySelector("input[name=logoPath]").value.includes("/companies/")`), "the logo uploads to the member's companies folder")
+  await type("input[name=name]", "Taller Valeria")
+  await click("#company-role-owner")
+  await type("input[name=jobTitle]", "Fundadora")
+  await type("input[name=sector]", "Manufactura e industria")
+  await type("input[name=services]", "prototipos, impresión 3D; prototipos")
+  await clickText("Agregar empresa", "document.querySelector('form')")
+  await waitFor(`location.search.includes("notice=company-added")`, 10000)
+  await browser.waitForLoad()
+  check((await alertText()).includes("Empresa agregada"), "adding a company returns to My profile with a confirmation")
+  const company = sql(`select role || '|' || array_to_string(services, ',') || '|' || coalesce(logo_path, '') from member_companies where user_id = '${userId}' and name = 'Taller Valeria'`)
+  const [role, services, logoPath] = company.split("|")
+  check(role === "owner" && services === "Prototipos,Impresión 3D", "role and services are saved (services cleaned and deduplicated)", company)
+  check(logoPath.startsWith(`${userId}/companies/`), "the logo is saved on the company")
+
+  await clickExpression(`document.querySelector('[aria-label="Editar Taller Valeria"]')`, "Edit company")
+  await waitFor(`location.pathname.startsWith("/mi-perfil/empresas/")`)
+  await browser.waitForLoad()
+  await type("input[name=services]", "Prototipos, Impresión 3D, Moldes")
+  await clickText("Guardar cambios", "document.querySelector('form')")
+  await waitFor(`location.search.includes("notice=company-updated")`, 10000)
+  await browser.waitForLoad()
+  check(sql(`select array_length(services, 1) from member_companies where user_id = '${userId}' and name = 'Taller Valeria'`) === "3", "editing a company updates it")
+
+  // Direct contact: shared by Valeria, not shared by Diego (seed).
+  await goto("/mi-perfil")
+  await type("input[name=whatsapp]", "33 4444 5555")
+  await click("#profile-showContact")
+  await clickText("Guardar cambios")
+  await waitForAlert("Perfil guardado")
+  check(sql(`select whatsapp || '|' || is_visible from profile_contacts where user_id = '${userId}'`) === "3344445555|true", "the member shares their WhatsApp")
+
+  await signIn("diego@cijj.test")
+  await goto(`/miembros/${userId}`)
+  check(await evaluate(`!!document.querySelector('a[href="https://wa.me/523344445555"]')`), "other members see a WhatsApp button for a shared contact")
+  check((await textOf("h2 ~ ul h3, section h3")).includes("Taller Valeria"), "and the member's companies on the profile")
+  await signIn("valeria@cijj.test")
+  await goto(`/miembros/${accounts.ids["diego@cijj.test"]}`)
+  check(!(await evaluate(`!!document.querySelector('a[href^="https://wa.me/"]')`)), "a contact that is not shared never shows")
+
+  // Directory filters and companies view
+  await goto(`/miembros?sector=${encodeURIComponent("Automotriz")}`)
+  await waitFor(`document.querySelector("ul h2")`)
+  check((await textOf("ul h2")) === "Diego Hernández", "filtering by sector shows only matching members", await textOf("ul h2"))
+  await goto(`/miembros?sector=${encodeURIComponent("Construcción e infraestructura")}`)
+  const construction = await textOf("ul h2")
+  check(construction.includes("Sofía") && construction.includes("Mariana"), "colleagues who did not fill in the sector still match through their company", construction)
+  await goto(`/miembros?q=${encodeURIComponent("impresion 3d")}`)
+  check((await textOf("ul h2")).includes("Valeria"), "search also looks at company services, ignoring accents")
+  await goto("/miembros/empresas")
+  const occidente = await evaluate(`[...document.querySelectorAll("li")].find((li) => li.querySelector("h2")?.textContent.includes("Constructora Occidente"))?.textContent ?? ""`)
+  check(occidente.includes("Sofía") && occidente.includes("Mariana"), "the companies view groups members who work at the same company")
+  check(await evaluate(`document.querySelector('nav a[href="/miembros/empresas"]')?.getAttribute("aria-current") === "page"`), "the Empresas section is marked as current in the header")
+
+  await goto("/mi-perfil")
+  await clickExpression(`document.querySelector('[aria-label="Eliminar Taller Valeria"]')`, "Delete company")
+  await waitFor(dialog)
+  await clickText("Eliminar empresa", dialog)
+  await waitFor(`!${dialog}`)
+  await wait(800)
+  check(sql(`select count(*) from member_companies where user_id = '${userId}' and name = 'Taller Valeria'`) === "0", "deleting a company removes it")
+  check(sql(`select count(*) from storage.objects where bucket_id = 'profiles' and name = '${logoPath}'`) === "0", "and deletes its logo from Storage")
+}
+
 async function deleteAccountFlow() {
   console.log("\nDelete account")
   await signIn("reviewer@cijj.test")
@@ -332,6 +407,7 @@ try {
   await profilePhotoFlow()
   await passwordResetFlow()
   await boardFlow()
+  await companiesAndContactFlow()
   await deleteAccountFlow()
   await unusedPhotoCleanupFlow()
 } catch (error) {

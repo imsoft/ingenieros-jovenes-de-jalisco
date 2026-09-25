@@ -1,15 +1,19 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeftIcon, BriefcaseBusinessIcon, EyeIcon, EyeOffIcon, GlobeIcon, MapPinIcon, PencilIcon } from "lucide-react"
+import { ArrowLeftIcon, BriefcaseBusinessIcon, EyeIcon, EyeOffIcon, GlobeIcon, MailIcon, MapPinIcon, MessageCircleIcon, PencilIcon } from "lucide-react"
+import { cn } from "cn"
 
 import { moderateProfile } from "@/actions/board"
+import { CompanyCard } from "@/components/members/company-card"
 import { ConfirmButton } from "@/components/panel/confirm-button"
 import { Notice } from "@/components/site/notice"
 import { MemberAvatar } from "@/components/members/member-avatar"
 import { InstagramIcon } from "@/components/site/social-icons"
 import { buttonVariants } from "@/components/ui/button"
+import { getCompanyLogoUrl, getContact, listCompaniesForUser } from "@/lib/members/companies"
 import { getProfile, getProfilePhotoUrl } from "@/lib/members/profiles"
+import { getWhatsAppLink } from "@/lib/panel/format"
 import { requireMember } from "@/lib/members/session"
 
 const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
@@ -29,10 +33,13 @@ export default async function MemberProfilePage({ params }: PageProps<"/miembros
   const member = await requireMember(`/miembros/${id}`)
   if (!isUuid(id)) notFound()
 
-  const profile = await getProfile(id)
+  const [profile, companies, contact] = await Promise.all([getProfile(id), listCompaniesForUser(id), getContact(id)])
   if (!profile) notFound()
 
   const isOwn = profile.user_id === member.userId
+  // RLS only returns someone else's contact when it is shared; the owner always gets theirs.
+  const sharedContact = contact && (contact.is_visible || !isOwn) ? contact : null
+  const primaryCompany = companies[0]
   const links = [
     profile.linkedin_url ? { href: profile.linkedin_url, label: "LinkedIn", icon: LinkedInIcon } : null,
     profile.instagram_handle
@@ -114,10 +121,10 @@ export default async function MemberProfilePage({ params }: PageProps<"/miembros
           {profile.headline ? <p className="mt-3 text-lg leading-relaxed text-foreground/85">{profile.headline}</p> : null}
 
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-foreground/75">
-            {profile.company || profile.job_title ? (
+            {primaryCompany ? (
               <span className="flex items-center gap-2">
                 <BriefcaseBusinessIcon className="size-4 shrink-0 text-brand-orange" aria-hidden />
-                {[profile.job_title, profile.company].filter(Boolean).join(" en ")}
+                {[primaryCompany.job_title, primaryCompany.name].filter(Boolean).join(" en ")}
               </span>
             ) : null}
             {profile.municipality ? (
@@ -135,9 +142,49 @@ export default async function MemberProfilePage({ params }: PageProps<"/miembros
             </section>
           ) : null}
 
-          {links.length > 0 ? (
+          {companies.length > 0 ? (
+            <section className="mt-8 border-t border-brand-blue/10 pt-6">
+              <h2 className="font-heading text-lg text-brand-blue uppercase">Empresas y emprendimientos</h2>
+              <ul className="mt-4 grid grid-cols-1 gap-3">
+                {companies.map((company) => (
+                  <li key={company.id} className="min-w-0">
+                    <CompanyCard company={{ ...company, logoUrl: getCompanyLogoUrl(company.logo_path) }} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {isOwn && contact && !contact.is_visible && (contact.whatsapp || contact.email) ? (
+            <Notice variant="warning" className="mt-8">
+              Tu contacto directo está oculto: los demás miembros no ven tu WhatsApp ni tu correo. Actívalo desde Mi perfil.
+            </Notice>
+          ) : null}
+
+          {links.length > 0 || sharedContact?.whatsapp || sharedContact?.email ? (
             <section className="mt-8 border-t border-brand-blue/10 pt-6">
               <h2 className="font-heading text-lg text-brand-blue uppercase">Contacto</h2>
+              {sharedContact?.whatsapp || sharedContact?.email ? (
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  {sharedContact.whatsapp ? (
+                    <a
+                      href={getWhatsAppLink(sharedContact.whatsapp)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(buttonVariants({ variant: "accent", size: "lg" }), "h-11")}
+                    >
+                      <MessageCircleIcon data-icon="inline-start" aria-hidden />
+                      Escribir por WhatsApp
+                    </a>
+                  ) : null}
+                  {sharedContact.email ? (
+                    <a href={`mailto:${sharedContact.email}`} className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11 min-w-0")}>
+                      <MailIcon data-icon="inline-start" aria-hidden />
+                      <span className="truncate">{sharedContact.email}</span>
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
               <ul className="mt-3 flex flex-wrap gap-2">
                 {links.map(({ href, label, icon: Icon }) => (
                   <li key={href}>

@@ -40,6 +40,7 @@ Si se conserva el proyecto actual, salta al paso 2.
    2. `supabase/migrations/20260915000000_board_panel.sql`
    3. `supabase/migrations/20260916000000_events.sql`
    4. `supabase/migrations/20260924000000_member_network.sql`
+   5. `supabase/migrations/20260925000000_member_companies_and_contact.sql`
 3. Crea las cuentas del Consejo y dales rol con el SQL de `docs/board-panel.md`.
 4. Si hay datos en el proyecto anterior (solicitudes, eventos), expórtalos desde **Table Editor → Export to CSV** y cárgalos en el nuevo, en el mismo orden de las migraciones.
 

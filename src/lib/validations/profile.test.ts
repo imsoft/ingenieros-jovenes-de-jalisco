@@ -6,8 +6,6 @@ const empty = {
   fullName: "Ana López",
   headline: "",
   specialty: "",
-  company: "",
-  jobTitle: "",
   municipality: "",
   bio: "",
   linkedinUrl: "",
@@ -15,12 +13,15 @@ const empty = {
   websiteUrl: "",
   isVisible: true,
   photoPath: "",
+  whatsapp: "",
+  contactEmail: "",
+  showContact: false,
 }
 
 describe("profileSchema", () => {
   it("turns empty fields into null", () => {
-    const profile = profileSchema.parse({ ...empty, company: "   " })
-    expect(profile.company).toBeNull()
+    const profile = profileSchema.parse({ ...empty, specialty: "   " })
+    expect(profile.specialty).toBeNull()
     expect(profile.linkedinUrl).toBeNull()
     expect(profile.photoPath).toBeNull()
   })
@@ -48,5 +49,23 @@ describe("profileSchema", () => {
 
   it("requires a name", () => {
     expect(profileSchema.safeParse({ ...empty, fullName: " " }).success).toBe(false)
+  })
+
+  it("normalizes the WhatsApp number and validates it", () => {
+    expect(profileSchema.parse({ ...empty, whatsapp: "33 1234-5678" }).whatsapp).toBe("3312345678")
+    expect(profileSchema.parse({ ...empty, whatsapp: "+52 (33) 1234 5678" }).whatsapp).toBe("+523312345678")
+    expect(profileSchema.safeParse({ ...empty, whatsapp: "12345" }).success).toBe(false)
+  })
+
+  it("validates and lowercases the contact email", () => {
+    expect(profileSchema.parse({ ...empty, contactEmail: "Ana@Correo.MX" }).contactEmail).toBe("ana@correo.mx")
+    expect(profileSchema.safeParse({ ...empty, contactEmail: "no-es-correo" }).success).toBe(false)
+  })
+
+  it("requires some contact data to share it", () => {
+    const result = profileSchema.safeParse({ ...empty, showContact: true })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.path).toEqual(["showContact"])
+    expect(profileSchema.safeParse({ ...empty, showContact: true, whatsapp: "3312345678" }).success).toBe(true)
   })
 })

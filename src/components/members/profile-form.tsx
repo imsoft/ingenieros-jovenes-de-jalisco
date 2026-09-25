@@ -31,12 +31,11 @@ import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { suggestedMunicipalities } from "@/content/site"
-import { createBrowserSupabaseClient } from "@/lib/supabase/browser"
 import type { ProfileField, ProfileFormState } from "@/lib/validations/profile"
 
+import { ACCEPTED_IMAGE_TYPES, useImageUpload } from "./use-image-upload"
+
 const initialState: ProfileFormState = { status: "idle" }
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
-const MAX_BYTES = 2 * 1024 * 1024
 
 const normalize = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
 const matchesMunicipality = (municipality: string, query: string) => normalize(municipality).includes(normalize(query))
@@ -45,8 +44,6 @@ export type ProfileFormValues = {
   fullName: string
   headline: string
   specialty: string
-  company: string
-  jobTitle: string
   municipality: string
   bio: string
   linkedinUrl: string
@@ -54,6 +51,9 @@ export type ProfileFormValues = {
   websiteUrl: string
   isVisible: boolean
   photoPath: string
+  whatsapp: string
+  contactEmail: string
+  showContact: boolean
 }
 
 type TextFieldProps = React.ComponentProps<"input"> & {
@@ -90,28 +90,11 @@ function PhotoPicker({
   photoUrl: string | null
   onChange: (photo: { path: string; url: string } | null) => void
 }) {
-  const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { upload, uploading, error } = useImageUpload(createProfilePhotoUpload)
 
   async function handleSelect(file: File) {
-    if (!ALLOWED_TYPES.includes(file.type)) return setError("Usa una imagen JPG, PNG o WebP.")
-    if (file.size > MAX_BYTES) return setError("La foto pesa más de 2 MB.")
-
-    setError(null)
-    setUploading(true)
-    const upload = await createProfilePhotoUpload(file.type)
-    if (!upload.ok) {
-      setUploading(false)
-      return setError(upload.message)
-    }
-
-    const { error: uploadError } = await createBrowserSupabaseClient()
-      .storage.from("profiles")
-      .uploadToSignedUrl(upload.path, upload.token, file, { contentType: file.type, cacheControl: "31536000" })
-    setUploading(false)
-
-    if (uploadError) return setError("No se pudo subir la foto. Inténtalo de nuevo.")
-    onChange({ path: upload.path, url: URL.createObjectURL(file) })
+    const uploaded = await upload(file)
+    if (uploaded) onChange(uploaded)
   }
 
   return (
@@ -138,7 +121,7 @@ function PhotoPicker({
             {photoUrl ? "Cambiar foto" : "Subir foto"}
             <input
               type="file"
-              accept={ALLOWED_TYPES.join(",")}
+              accept={ACCEPTED_IMAGE_TYPES}
               disabled={uploading}
               className="sr-only"
               onChange={(event) => {
@@ -280,10 +263,7 @@ export function ProfileForm({
             placeholder="Superviso obra de infraestructura hidráulica"
             defaultValue={values.headline}
           />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField name="company" label="Empresa" errors={errors} maxLength={120} autoComplete="organization" defaultValue={values.company} />
-            <TextField name="jobTitle" label="Puesto" errors={errors} maxLength={120} autoComplete="organization-title" defaultValue={values.jobTitle} />
-          </div>
+          <FieldDescription>Tus empresas y emprendimientos los agregas en la sección de abajo, cada uno con su ficha.</FieldDescription>
         </FieldGroup>
       </FieldSet>
 
@@ -313,6 +293,49 @@ export function ProfileForm({
               defaultValue={values.websiteUrl}
             />
           </div>
+        </FieldGroup>
+      </FieldSet>
+
+      <FieldSet>
+        <FieldLegend className="font-heading text-lg text-brand-blue uppercase">Contacto directo</FieldLegend>
+        <FieldDescription className="-mt-1">Solo lo ven otros miembros, y únicamente si lo activas.</FieldDescription>
+        <FieldGroup className="gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              name="whatsapp"
+              label="WhatsApp"
+              errors={errors}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="33 1234 5678"
+              defaultValue={values.whatsapp}
+            />
+            <TextField
+              name="contactEmail"
+              label="Correo de contacto"
+              errors={errors}
+              type="email"
+              autoComplete="email"
+              spellCheck={false}
+              defaultValue={values.contactEmail}
+            />
+          </div>
+          <Field orientation="horizontal" data-invalid={errors.showContact ? true : undefined} className="rounded-2xl bg-secondary/60 p-4">
+            <FieldContent>
+              <FieldLabel htmlFor="profile-showContact" className="text-brand-blue">
+                Mostrar mi contacto a los miembros
+              </FieldLabel>
+              <FieldDescription>Aparece en tu perfil con botones para escribirte por WhatsApp o correo.</FieldDescription>
+              <FieldError>{errors.showContact?.[0]}</FieldError>
+            </FieldContent>
+            <Switch
+              id="profile-showContact"
+              name="showContact"
+              defaultChecked={values.showContact}
+              aria-invalid={errors.showContact ? true : undefined}
+            />
+          </Field>
         </FieldGroup>
       </FieldSet>
 

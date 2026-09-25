@@ -221,3 +221,23 @@ export const suggestedMunicipalities = [
   "Ameca",
   "Tequila",
 ] as const
+
+// Provisional: suggested company sectors for autocomplete and directory filters (the field accepts any value).
+export const companySectors = [
+  "Construcción e infraestructura",
+  "Manufactura e industria",
+  "Automotriz",
+  "Electrónica y semiconductores",
+  "Energía",
+  "Tecnología y software",
+  "Telecomunicaciones",
+  "Consultoría e ingeniería",
+  "Arquitectura y diseño",
+  "Inmobiliario",
+  "Logística y transporte",
+  "Agroindustria y alimentos",
+  "Medio ambiente y agua",
+  "Minería",
+  "Gobierno y sector público",
+  "Educación e investigación",
+] as const
