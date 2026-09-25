@@ -4,9 +4,19 @@ Lista para pasar el sitio a su dominio propio y a las cuentas definitivas del Co
 
 Usa `DOMINIO` como el dominio final (ej. `ingenierosjovenesjalisco.org`) y `PROYECTO` como el id del proyecto de Supabase (lo que va antes de `.supabase.co`).
 
-## 0. Migrar la base actual a inglés (una sola vez, proyecto existente)
+**Configuración actual del Colectivo** (cuentas propias, desde septiembre de 2026):
 
-El proyecto de Supabase que ya está en producción se creó con las migraciones originales en español. Para pasarlo a los nombres en inglés **sin perder datos**, hazlo en este orden y en un mismo momento, porque la versión anterior de la app deja de funcionar en cuanto corre el paso 1:
+| Servicio | Valor |
+|---|---|
+| Sitio (Vercel) | `https://ingenieros-jovenes-de-jalisco-azure.vercel.app` |
+| Supabase | proyecto `zfprqviurefzslfyqncz` (`https://zfprqviurefzslfyqncz.supabase.co`) |
+| Dominio propio | pendiente |
+
+## 0. Migrar una base creada con las migraciones en español (solo proyectos antiguos)
+
+> El proyecto actual (`zfprqviurefzslfyqncz`) se instaló desde cero con las migraciones en inglés: **no necesita esta sección**. Solo aplica a una base creada con las migraciones originales en español.
+
+Para pasar una base así a los nombres en inglés **sin perder datos**, hazlo en este orden y en un mismo momento, porque la versión anterior de la app deja de funcionar en cuanto corre el paso 1:
 
 1. **SQL Editor** → ejecuta `supabase/scripts/rename-schema-to-english.sql`. Renombra tablas, columnas, tipos, funciones y políticas conservando los datos, y crea el bucket `events`. Corre en una sola transacción: si algo falla, no cambia nada.
 2. Mueve las fotos de eventos al bucket nuevo desde tu terminal, con la llave **secret** (Project Settings → API). No la guardes en ningún archivo:

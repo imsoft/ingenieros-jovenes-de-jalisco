@@ -22,9 +22,9 @@ Luego, en **Authentication → Sign In / Providers**, activa **Allow new users t
 
 **Authentication → URL Configuration**:
 
-- Site URL: `https://ingenieros-jovenes-de-jalisco.vercel.app`
+- Site URL: `https://ingenieros-jovenes-de-jalisco-azure.vercel.app`
 - Redirect URLs:
-  - `https://ingenieros-jovenes-de-jalisco.vercel.app/auth/**`
+  - `https://ingenieros-jovenes-de-jalisco-azure.vercel.app/auth/**`
   - `http://localhost:3000/auth/**`
 
 `/auth/callback` termina el ingreso con Google. `/auth/confirm` recibe los enlaces de los correos (confirmación, recuperación, invitación). Funciona aunque el correo se abra en otro dispositivo.
@@ -69,8 +69,8 @@ Estas plantillas **se generan** con el mismo diseño que los correos de la app (
 
 1. En [Google Cloud Console](https://console.cloud.google.com/) → APIs y servicios → **Pantalla de consentimiento OAuth**: tipo *Externo*, nombre "Ingenieros Jóvenes de Jalisco", logo y correo de soporte. Publícala (*In production*).
 2. **Credenciales → Crear credenciales → ID de cliente de OAuth** → *Aplicación web*:
-   - Orígenes autorizados: `https://ingenieros-jovenes-de-jalisco.vercel.app`, `http://localhost:3000`
-   - URI de redirección: `https://jcomkwwldbgzchlabgps.supabase.co/auth/v1/callback`
+   - Orígenes autorizados: `https://ingenieros-jovenes-de-jalisco-azure.vercel.app`, `http://localhost:3000`
+   - URI de redirección: `https://zfprqviurefzslfyqncz.supabase.co/auth/v1/callback`
 3. Copia el Client ID y el Client Secret en Supabase → **Authentication → Sign In / Providers → Google** → Enable.
 
 ### 5. Correos de autenticación con Resend (obligatorio para registro con correo)

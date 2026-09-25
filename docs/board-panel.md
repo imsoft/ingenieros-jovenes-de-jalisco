@@ -2,7 +2,7 @@
 
 Guía para quien administre el acceso al panel de solicitudes del Colectivo.
 
-- **Dirección:** `/panel` del sitio (por ejemplo, `https://ingenieros-jovenes-de-jalisco.vercel.app/panel`).
+- **Dirección:** `/panel` del sitio (por ejemplo, `https://ingenieros-jovenes-de-jalisco-azure.vercel.app/panel`).
 - **Qué permite:** ver las solicitudes de afiliación, filtrarlas por estado, buscarlas, contactar por WhatsApp o correo, aprobarlas, rechazarlas o regresarlas a pendiente, y guardar notas internas.
 - **Quién entra:** solo integrantes activos del Consejo. Se agregan desde el propio panel (**Consejo**, solo administradores).
 

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
+import { getUnusedPhotoPaths } from "@/lib/members/photo-cleanup"
 import { PROFILES_BUCKET } from "@/lib/members/profiles"
 import { requireMember } from "@/lib/members/session"
 import { createSessionSupabaseClient } from "@/lib/supabase/session"
@@ -14,6 +15,24 @@ const EXTENSIONS = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "web
 const isValidPhotoPath = (userId: string, path: string) =>
   new RegExp(`^${userId}/[0-9a-f-]{36}\\.(jpg|png|webp)$`).test(path)
 
+type SessionClient = Awaited<ReturnType<typeof createSessionSupabaseClient>>
+
+// Deletes the photos in the member's folder that their profile doesn't use: uploads that were never
+// saved and replaced photos. Never fails the calling action; leftovers are cleaned on the next call.
+async function removeUnusedPhotos(supabase: SessionClient, userId: string, keepPath: string | null) {
+  const { data: files, error } = await supabase.storage.from(PROFILES_BUCKET).list(userId, { limit: 100 })
+  if (error) {
+    console.error("[profile] Could not list the photo folder:", error.message)
+    return
+  }
+
+  const unused = getUnusedPhotoPaths(userId, (files ?? []).map((file) => file.name), keepPath)
+  if (unused.length === 0) return
+
+  const { error: removeError } = await supabase.storage.from(PROFILES_BUCKET).remove(unused)
+  if (removeError) console.error("[profile] Could not delete unused photos:", removeError.message)
+}
+
 // Photo step 1: the server authorizes the upload to the member's own folder.
 export async function createProfilePhotoUpload(
   mimeType: string
@@ -23,6 +42,11 @@ export async function createProfilePhotoUpload(
   if (!extension) return { ok: false, message: "Formato no permitido. Usa JPG, PNG o WebP." }
 
   const supabase = await createSessionSupabaseClient()
+
+  // Clears photos from earlier uploads that were never saved, keeping the one the profile uses.
+  const { data: profile } = await supabase.from("profiles").select("photo_path").eq("user_id", member.userId).maybeSingle()
+  await removeUnusedPhotos(supabase, member.userId, profile?.photo_path ?? null)
+
   const { data, error } = await supabase.storage
     .from(PROFILES_BUCKET)
     .createSignedUploadUrl(`${member.userId}/${randomUUID()}.${extension}`)
@@ -39,7 +63,7 @@ const getText = (formData: FormData, field: string) => {
   return typeof value === "string" ? value : ""
 }
 
-// Step 2 (and the only one for the rest of the data): saves the profile and, if the photo changed, deletes the old one.
+// Step 2 (and the only one for the rest of the data): saves the profile and deletes every photo it no longer uses.
 export async function saveProfile(_prevState: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
   const member = await requireMember("/mi-perfil")
 
@@ -99,10 +123,7 @@ export async function saveProfile(_prevState: ProfileFormState, formData: FormDa
     return { status: "error", message: "No pudimos guardar tu perfil. Inténtalo de nuevo.", errors: {} }
   }
 
-  if (previous?.photo_path && previous.photo_path !== data.photoPath) {
-    const { error: removeError } = await supabase.storage.from(PROFILES_BUCKET).remove([previous.photo_path])
-    if (removeError) console.error("[profile] Could not delete the previous photo:", removeError.message)
-  }
+  await removeUnusedPhotos(supabase, member.userId, data.photoPath)
 
   revalidatePath("/miembros", "layout")
   revalidatePath("/mi-perfil")
