@@ -5,11 +5,13 @@ import { cookies } from "next/headers"
 
 // Cliente con la sesión del usuario (cookies). Todas sus consultas pasan por RLS como `authenticated`.
 export async function crearClienteSupabaseConSesion() {
+  // Primero las cookies: así Next marca la página como dinámica y nunca intenta prerenderizarla
+  // en el build (donde un error por variables faltantes rompería el despliegue completo).
+  const almacen = await cookies()
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const clave = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url || !clave) throw new Error("Supabase no está configurado (faltan variables de entorno).")
-
-  const almacen = await cookies()
 
   return createServerClient(url, clave, {
     cookies: {
