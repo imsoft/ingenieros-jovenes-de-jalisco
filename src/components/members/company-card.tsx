@@ -21,14 +21,19 @@ export type CompanyCardData = {
   logoUrl: string | null
 }
 
+// Square logos fill the box; other shapes are shown whole on white (never cropped).
 export function CompanyLogo({ logoUrl, size = 56, className }: { logoUrl: string | null; size?: number; className?: string }) {
   return (
     <span
-      className={cn("relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-secondary ring-1 ring-brand-blue/10", className)}
+      className={cn(
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-brand-blue/10",
+        logoUrl ? "bg-white" : "bg-secondary",
+        className
+      )}
       style={{ width: size, height: size }}
     >
       {logoUrl ? (
-        <Image src={logoUrl} alt="" fill sizes={`${size * 2}px`} className="object-contain p-1.5" unoptimized={logoUrl.startsWith("blob:")} />
+        <Image src={logoUrl} alt="" fill sizes={`${size * 2}px`} className="object-contain" unoptimized={logoUrl.startsWith("blob:")} />
       ) : (
         <Building2Icon className="size-1/2 text-brand-blue/40" aria-hidden />
       )}
