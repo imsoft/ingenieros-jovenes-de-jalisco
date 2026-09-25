@@ -1,56 +1,56 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-// Rutas que requieren sesión y a qué pantalla de ingreso mandan si no la hay.
-const RUTAS_PROTEGIDAS: { prefijo: string; ingreso: string; publicas?: string[] }[] = [
-  { prefijo: "/panel", ingreso: "/panel/ingresar", publicas: ["/panel/ingresar"] },
-  { prefijo: "/miembros", ingreso: "/ingresar" },
-  { prefijo: "/mi-perfil", ingreso: "/ingresar" },
+// Routes that require a session and which sign-in page they send to when there is none.
+const PROTECTED_ROUTES: { prefix: string; signInPath: string; publicPaths?: string[] }[] = [
+  { prefix: "/panel", signInPath: "/panel/ingresar", publicPaths: ["/panel/ingresar"] },
+  { prefix: "/miembros", signInPath: "/ingresar" },
+  { prefix: "/mi-perfil", signInPath: "/ingresar" },
 ]
 
-function reglaPara(ruta: string) {
-  return RUTAS_PROTEGIDAS.find(({ prefijo }) => ruta === prefijo || ruta.startsWith(`${prefijo}/`))
+function ruleFor(path: string) {
+  return PROTECTED_ROUTES.find(({ prefix }) => path === prefix || path.startsWith(`${prefix}/`))
 }
 
-// Refresca la sesión de Supabase y hace la verificación optimista de acceso.
-// La autorización real (miembro, Consejo) se valida en el servidor y en RLS.
-export async function actualizarSesion(request: NextRequest) {
-  let respuesta = NextResponse.next({ request })
+// Refreshes the Supabase session and performs the optimistic access check.
+// Real authorization (member, Board) is enforced on the server and in RLS.
+export async function updateSession(request: NextRequest) {
+  let response = NextResponse.next({ request })
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const clave = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !clave) return respuesta
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) return response
 
-  const supabase = createServerClient(url, clave, {
+  const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (porEscribir, encabezados) => {
-        porEscribir.forEach(({ name, value }) => request.cookies.set(name, value))
-        respuesta = NextResponse.next({ request })
-        porEscribir.forEach(({ name, value, options }) => respuesta.cookies.set(name, value, options))
-        // Evita que una CDN guarde en caché respuestas con cookies de sesión.
-        Object.entries(encabezados).forEach(([nombre, valor]) => respuesta.headers.set(nombre, valor))
+      setAll: (cookiesToSet, headers) => {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = NextResponse.next({ request })
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+        // Prevents a CDN from caching responses that carry session cookies.
+        Object.entries(headers).forEach(([name, value]) => response.headers.set(name, value))
       },
     },
   })
 
-  // Importante: no agregar lógica entre la creación del cliente y getClaims().
+  // Important: do not add logic between creating the client and getClaims().
   const { data } = await supabase.auth.getClaims()
-  const conSesion = Boolean(data?.claims?.sub)
+  const hasSession = Boolean(data?.claims?.sub)
 
-  const ruta = request.nextUrl.pathname
-  const regla = reglaPara(ruta)
+  const path = request.nextUrl.pathname
+  const rule = ruleFor(path)
 
-  if (!conSesion && regla && !regla.publicas?.includes(ruta)) {
-    const destino = request.nextUrl.clone()
-    destino.pathname = regla.ingreso
-    destino.search = ""
-    if (ruta !== regla.prefijo || regla.prefijo !== "/panel") destino.searchParams.set("siguiente", ruta)
+  if (!hasSession && rule && !rule.publicPaths?.includes(path)) {
+    const destination = request.nextUrl.clone()
+    destination.pathname = rule.signInPath
+    destination.search = ""
+    if (path !== rule.prefix || rule.prefix !== "/panel") destination.searchParams.set("next", path)
 
-    const redireccion = NextResponse.redirect(destino)
-    respuesta.cookies.getAll().forEach((cookie) => redireccion.cookies.set(cookie))
-    return redireccion
+    const redirectResponse = NextResponse.redirect(destination)
+    response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie))
+    return redirectResponse
   }
 
-  return respuesta
+  return response
 }

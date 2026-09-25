@@ -1,45 +1,45 @@
 import type { Metadata } from "next"
 import { CalendarHeartIcon } from "lucide-react"
 
-import { TarjetaEvento } from "@/components/eventos/tarjeta-evento"
-import { DecoracionPuente } from "@/components/sitio/decoracion-puente"
-import { IconoInstagram } from "@/components/sitio/iconos-redes"
-import { Revelar } from "@/components/sitio/revelar"
+import { EventCard } from "@/components/events/event-card"
+import { BridgeDecoration } from "@/components/site/bridge-decoration"
+import { Reveal } from "@/components/site/reveal"
+import { InstagramIcon } from "@/components/site/social-icons"
 import { buttonVariants } from "@/components/ui/button"
-import { sitio } from "@/content/sitio"
-import { listarEventosPublicos } from "@/lib/eventos/publico"
+import { site } from "@/content/site"
+import { listPublicEvents } from "@/lib/events/public"
 
-// Se regenera cada minuto; el panel además la refresca al publicar o editar un evento.
+// Regenerated every minute; the panel also refreshes it when an event is published or edited.
 export const revalidate = 60
 
-const descripcion =
+const description =
   "Próximos eventos del Colectivo de Ingenieros Jóvenes de Jalisco: networking, conferencias y convivencias del gremio en Guadalajara y todo Jalisco."
 
 export const metadata: Metadata = {
   title: "Eventos",
-  description: descripcion,
+  description,
   alternates: { canonical: "/eventos" },
   openGraph: {
     type: "website",
     locale: "es_MX",
     url: "/eventos",
-    siteName: sitio.nombre,
-    title: `Eventos | ${sitio.nombreCorto}`,
-    description: descripcion,
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: `${sitio.nombre}: ${sitio.lema}` }],
+    siteName: site.name,
+    title: `Eventos | ${site.shortName}`,
+    description,
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: `${site.name}: ${site.tagline}` }],
   },
 }
 
-export default async function PaginaEventos() {
-  const { proximos, anteriores } = await listarEventosPublicos()
+export default async function EventsPage() {
+  const { upcoming, past } = await listPublicEvents()
 
   return (
     <>
-      <section className="relative isolate overflow-hidden bg-azul-profundo text-white">
-        <DecoracionPuente className="absolute -right-24 -bottom-10 -z-10 w-4xl max-w-none text-white opacity-[0.06]" />
+      <section className="relative isolate overflow-hidden bg-brand-navy text-white">
+        <BridgeDecoration className="absolute -right-24 -bottom-10 -z-10 w-4xl max-w-none text-white opacity-[0.06]" />
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
-          <p className="flex items-center gap-3 text-sm font-semibold tracking-widest text-naranja uppercase">
-            <span aria-hidden className="h-px w-8 bg-naranja" />
+          <p className="flex items-center gap-3 text-sm font-semibold tracking-widest text-brand-orange uppercase">
+            <span aria-hidden className="h-px w-8 bg-brand-orange" />
             Agenda del Colectivo
           </p>
           <h1 className="mt-4 max-w-3xl font-heading text-5xl leading-[1.02] font-bold text-balance uppercase sm:text-6xl">
@@ -52,51 +52,51 @@ export default async function PaginaEventos() {
         </div>
       </section>
 
-      <section aria-labelledby="titulo-proximos" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-        <h2 id="titulo-proximos" className="font-heading text-3xl font-bold text-azul uppercase sm:text-4xl">
+      <section aria-labelledby="upcoming-title" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
+        <h2 id="upcoming-title" className="font-heading text-3xl font-bold text-brand-blue uppercase sm:text-4xl">
           Próximos eventos
         </h2>
 
-        {proximos.length === 0 ? (
+        {upcoming.length === 0 ? (
           <div className="mt-8 flex flex-col items-center gap-4 rounded-3xl bg-secondary px-6 py-14 text-center">
-            <CalendarHeartIcon className="size-10 text-naranja" aria-hidden />
-            <p className="font-heading text-xl font-semibold text-azul uppercase">Muy pronto anunciaremos el siguiente</p>
+            <CalendarHeartIcon className="size-10 text-brand-orange" aria-hidden />
+            <p className="font-heading text-xl font-semibold text-brand-blue uppercase">Muy pronto anunciaremos el siguiente</p>
             <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
               Síguenos en redes para enterarte primero de las convocatorias.
             </p>
             <a
-              href={sitio.redes.instagram}
+              href={site.social.instagram}
               target="_blank"
               rel="noopener noreferrer"
-              className={buttonVariants({ variant: "acento", size: "xl" })}
+              className={buttonVariants({ variant: "accent", size: "xl" })}
             >
-              <IconoInstagram className="size-5" />
+              <InstagramIcon className="size-5" />
               Seguir en Instagram
             </a>
           </div>
         ) : (
           <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {proximos.map((evento, indice) => (
-              <Revelar key={evento.id} como="li" retraso={indice * 80}>
-                <TarjetaEvento evento={evento} />
-              </Revelar>
+            {upcoming.map((event, index) => (
+              <Reveal key={event.id} as="li" delay={index * 80}>
+                <EventCard event={event} />
+              </Reveal>
             ))}
           </ul>
         )}
       </section>
 
-      {anteriores.length > 0 ? (
-        <section aria-labelledby="titulo-anteriores" className="bg-secondary">
+      {past.length > 0 ? (
+        <section aria-labelledby="past-title" className="bg-secondary">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-            <h2 id="titulo-anteriores" className="font-heading text-3xl font-bold text-azul uppercase sm:text-4xl">
+            <h2 id="past-title" className="font-heading text-3xl font-bold text-brand-blue uppercase sm:text-4xl">
               Eventos anteriores
             </h2>
             <p className="mt-2 text-muted-foreground">Así hemos construido comunidad.</p>
             <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {anteriores.map((evento, indice) => (
-                <Revelar key={evento.id} como="li" retraso={Math.min(indice, 5) * 60}>
-                  <TarjetaEvento evento={evento} pasado />
-                </Revelar>
+              {past.map((event, index) => (
+                <Reveal key={event.id} as="li" delay={Math.min(index, 5) * 60}>
+                  <EventCard event={event} past />
+                </Reveal>
               ))}
             </ul>
           </div>

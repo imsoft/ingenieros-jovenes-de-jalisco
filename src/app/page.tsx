@@ -1,39 +1,39 @@
 import { JsonLd } from "@/components/seo/json-ld"
-import { BarraCtaMovil } from "@/components/sitio/barra-cta-movil"
-import { Encabezado } from "@/components/sitio/encabezado"
-import { Pie } from "@/components/sitio/pie"
-import { Actividades } from "@/components/sitio/secciones/actividades"
-import { Beneficios } from "@/components/sitio/secciones/beneficios"
-import { Cifras } from "@/components/sitio/secciones/cifras"
-import { Nosotros } from "@/components/sitio/secciones/nosotros"
-import { Pilares } from "@/components/sitio/secciones/pilares"
-import { Portada } from "@/components/sitio/secciones/portada"
-import { Preguntas } from "@/components/sitio/secciones/preguntas"
-import { ProximosEventos } from "@/components/sitio/secciones/proximos-eventos"
-import { Unete } from "@/components/sitio/secciones/unete"
-import { datosPreguntasFrecuentes } from "@/lib/seo/datos-estructurados"
+import { MobileCtaBar } from "@/components/site/mobile-cta-bar"
+import { Header } from "@/components/site/header"
+import { Footer } from "@/components/site/footer"
+import { Activities } from "@/components/site/sections/activities"
+import { Benefits } from "@/components/site/sections/benefits"
+import { Stats } from "@/components/site/sections/stats"
+import { About } from "@/components/site/sections/about"
+import { Pillars } from "@/components/site/sections/pillars"
+import { Hero } from "@/components/site/sections/hero"
+import { Faq } from "@/components/site/sections/faq"
+import { UpcomingEvents } from "@/components/site/sections/upcoming-events"
+import { Join } from "@/components/site/sections/join"
+import { getFaqStructuredData } from "@/lib/seo/structured-data"
 
-// La portada muestra los próximos eventos: se regenera cada 5 minutos y al publicar desde el panel.
+// The home page shows upcoming events: it is regenerated every 5 minutes and when publishing from the panel.
 export const revalidate = 300
 
-export default function Inicio() {
+export default function HomePage() {
   return (
     <>
-      <Encabezado />
+      <Header />
       <main id="contenido" className="flex-1">
-        <Portada />
-        <Cifras />
-        <Nosotros />
-        <Pilares />
-        <Actividades />
-        <ProximosEventos />
-        <Beneficios />
-        <Preguntas />
-        <Unete />
+        <Hero />
+        <Stats />
+        <About />
+        <Pillars />
+        <Activities />
+        <UpcomingEvents />
+        <Benefits />
+        <Faq />
+        <Join />
       </main>
-      <Pie />
-      <BarraCtaMovil />
-      <JsonLd datos={datosPreguntasFrecuentes()} />
+      <Footer />
+      <MobileCtaBar />
+      <JsonLd data={getFaqStructuredData()} />
     </>
   )
 }

@@ -1,26 +1,26 @@
 import { NextResponse, type NextRequest } from "next/server"
 
-import { rutaSegura } from "@/lib/cuenta/rutas"
-import { crearClienteSupabaseConSesion } from "@/lib/supabase/sesion"
+import { safeRedirectPath } from "@/lib/account/routes"
+import { createSessionSupabaseClient } from "@/lib/supabase/session"
 
-// Termina el inicio de sesión con Google, la confirmación de correo y la recuperación de contraseña (PKCE).
+// Completes Google sign-in, email confirmation and password recovery (PKCE).
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
-  const siguiente = rutaSegura(url.searchParams.get("siguiente"))
-  const errorProveedor = url.searchParams.get("error_description") ?? url.searchParams.get("error")
+  const next = safeRedirectPath(url.searchParams.get("next"))
+  const providerError = url.searchParams.get("error_description") ?? url.searchParams.get("error")
 
-  if (errorProveedor) {
-    const motivo = errorProveedor.includes("CORREO_NO_AUTORIZADO") ? "no-autorizado" : "google"
-    return NextResponse.redirect(new URL(`/ingresar?error=${motivo}`, url.origin))
+  if (providerError) {
+    const reason = providerError.includes("EMAIL_NOT_AUTHORIZED") ? "not-authorized" : "google"
+    return NextResponse.redirect(new URL(`/ingresar?error=${reason}`, url.origin))
   }
 
-  const codigo = url.searchParams.get("code")
-  if (codigo) {
-    const supabase = await crearClienteSupabaseConSesion()
-    const { error } = await supabase.auth.exchangeCodeForSession(codigo)
-    if (!error) return NextResponse.redirect(new URL(siguiente, url.origin))
-    console.error("[cuenta] No se pudo completar el inicio de sesión:", error.code, error.message)
+  const code = url.searchParams.get("code")
+  if (code) {
+    const supabase = await createSessionSupabaseClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) return NextResponse.redirect(new URL(next, url.origin))
+    console.error("[account] Could not complete sign-in:", error.code, error.message)
   }
 
-  return NextResponse.redirect(new URL("/ingresar?error=enlace", url.origin))
+  return NextResponse.redirect(new URL("/ingresar?error=invalid-link", url.origin))
 }

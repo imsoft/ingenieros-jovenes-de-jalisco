@@ -1,14 +1,14 @@
-import { Encabezado } from "@/components/sitio/encabezado"
-import { Pie } from "@/components/sitio/pie"
+import { Footer } from "@/components/site/footer"
+import { Header } from "@/components/site/header"
 
-export default function LayoutEventos({ children }: LayoutProps<"/eventos">) {
+export default function EventsLayout({ children }: LayoutProps<"/eventos">) {
   return (
     <>
-      <Encabezado />
+      <Header />
       <main id="contenido" className="flex-1">
         {children}
       </main>
-      <Pie />
+      <Footer />
     </>
   )
 }

@@ -7,11 +7,11 @@ const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL
 const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
-    // Solo con Supabase local (supabase start): permite optimizar imágenes servidas desde 127.0.0.1.
+    // Only with local Supabase (supabase start): allows optimizing images served from 127.0.0.1.
     dangerouslyAllowLocalIP: supabase?.hostname === "127.0.0.1",
-    // Portadas de eventos (bucket "eventos") y fotos de perfil de miembros (bucket "perfiles").
+    // Event covers and galleries ("events" bucket) and member profile photos ("profiles" bucket).
     remotePatterns: supabase
-      ? ["eventos", "perfiles"].map((bucket) => ({
+      ? ["events", "profiles"].map((bucket) => ({
           protocol: supabase.protocol === "http:" ? ("http" as const) : ("https" as const),
           hostname: supabase.hostname,
           port: supabase.port,

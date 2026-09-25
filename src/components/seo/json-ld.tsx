@@ -1,10 +1,10 @@
-// Datos estructurados (schema.org) para buscadores y asistentes de IA.
-// Se escapa "<" para evitar inyección de HTML dentro del <script>.
-export function JsonLd({ datos }: { datos: object }) {
+// Structured data (schema.org) for search engines and AI assistants.
+// "<" is escaped to prevent HTML injection inside the <script>.
+export function JsonLd({ data }: { data: object }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(datos).replace(/</g, "\\u003c") }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
     />
   )
 }

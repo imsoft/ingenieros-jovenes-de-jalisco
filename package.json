@@ -9,8 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db": "bash supabase/pruebas/correr.sh",
-    "correos:supabase": "ACTUALIZAR_PLANTILLAS=1 vitest run src/lib/correo/plantillas-autenticacion.test.ts"
+    "test:db": "bash supabase/tests/run.sh",
+    "emails:supabase": "UPDATE_EMAIL_TEMPLATES=1 vitest run src/lib/email/auth-templates.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

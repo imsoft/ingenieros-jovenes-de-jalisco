@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next"
 
-import { esIndexable, obtenerUrlSitio } from "@/lib/url-sitio"
+import { getSiteUrl, isIndexable } from "@/lib/site-url"
 
 export default function robots(): MetadataRoute.Robots {
-  const url = obtenerUrlSitio()
+  const url = getSiteUrl()
 
-  if (!esIndexable()) {
+  if (!isIndexable()) {
     return { rules: { userAgent: "*", disallow: "/" } }
   }
 

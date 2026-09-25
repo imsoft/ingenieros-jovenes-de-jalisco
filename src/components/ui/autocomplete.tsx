@@ -5,7 +5,7 @@ import { cn } from "cn"
 
 import { Input } from "@/components/ui/input"
 
-// Campo de texto libre con sugerencias (Base UI Autocomplete) con el estilo de la plataforma.
+// Free-text field with suggestions (Base UI Autocomplete) using the platform styling.
 
 const Autocomplete = AutocompletePrimitive.Root
 
@@ -33,7 +33,7 @@ function AutocompleteContent({
         <AutocompletePrimitive.Popup
           data-slot="autocomplete-content"
           className={cn(
-            "group/autocomplete-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) origin-(--transform-origin) overflow-hidden rounded-xl bg-popover text-popover-foreground shadow-lg ring-1 shadow-azul/10 ring-azul/10 duration-100",
+            "group/autocomplete-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) origin-(--transform-origin) overflow-hidden rounded-xl bg-popover text-popover-foreground shadow-lg ring-1 shadow-brand-blue/10 ring-brand-blue/10 duration-100",
             "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className
           )}
@@ -63,8 +63,8 @@ function AutocompleteItem({ className, ...props }: AutocompletePrimitive.Item.Pr
       data-slot="autocomplete-item"
       className={cn(
         "flex w-full cursor-default items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm outline-hidden select-none",
-        "data-highlighted:bg-azul/10 data-highlighted:text-azul data-disabled:pointer-events-none data-disabled:opacity-50",
-        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:text-naranja [&_svg:not([class*='size-'])]:size-4",
+        "data-highlighted:bg-brand-blue/10 data-highlighted:text-brand-blue data-disabled:pointer-events-none data-disabled:opacity-50",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:text-brand-orange [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}

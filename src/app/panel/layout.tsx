@@ -5,6 +5,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function LayoutPanel({ children }: LayoutProps<"/panel">) {
+export default function PanelLayout({ children }: LayoutProps<"/panel">) {
   return <div className="flex min-h-screen flex-col bg-secondary">{children}</div>
 }

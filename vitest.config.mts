@@ -5,8 +5,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
-      // "server-only" lanza fuera de React Server Components; en pruebas es un módulo vacío.
-      "server-only": fileURLToPath(new URL("./src/test/vacio.ts", import.meta.url)),
+      // "server-only" throws outside React Server Components; in tests it is an empty module.
+      "server-only": fileURLToPath(new URL("./src/test/empty.ts", import.meta.url)),
     },
   },
   test: {

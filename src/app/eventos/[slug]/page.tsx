@@ -12,77 +12,77 @@ import {
 } from "lucide-react"
 import { cn } from "cn"
 
-import { FormularioRegistroEvento } from "@/components/eventos/formulario-registro-evento"
-import { GaleriaEvento } from "@/components/eventos/galeria-evento"
+import { EventGallery } from "@/components/events/event-gallery"
+import { EventRegistrationForm } from "@/components/events/event-registration-form"
 import { JsonLd } from "@/components/seo/json-ld"
-import { DecoracionPuente } from "@/components/sitio/decoracion-puente"
-import { IconoInstagram } from "@/components/sitio/iconos-redes"
+import { BridgeDecoration } from "@/components/site/bridge-decoration"
+import { InstagramIcon } from "@/components/site/social-icons"
 import { buttonVariants } from "@/components/ui/button"
-import { sitio } from "@/content/sitio"
-import { formatearFechaLarga, formatearHorario, formatearPrecio, urlImagenEvento } from "@/lib/eventos/formato"
-import { obtenerEventoPorSlug } from "@/lib/eventos/publico"
-import { disponibilidadEvento, UMBRAL_ULTIMOS_LUGARES } from "@/lib/eventos/tipos"
-import { datosEvento } from "@/lib/seo/datos-estructurados"
+import { site } from "@/content/site"
+import { formatLongDate, formatPrice, formatTimeRange, getEventImageUrl } from "@/lib/events/format"
+import { getEventBySlug } from "@/lib/events/public"
+import { getEventAvailability, LAST_SPOTS_THRESHOLD } from "@/lib/events/types"
+import { getEventStructuredData } from "@/lib/seo/structured-data"
 
 export const revalidate = 60
 
-// Sin rutas precalculadas: cada evento se genera en su primera visita y queda en caché (ISR).
+// No prebuilt paths: each event is generated on its first visit and then cached (ISR).
 export async function generateStaticParams() {
   return []
 }
 
 export async function generateMetadata({ params }: PageProps<"/eventos/[slug]">): Promise<Metadata> {
   const { slug } = await params
-  const evento = await obtenerEventoPorSlug(slug)
-  if (!evento) return { title: "Evento no encontrado", robots: { index: false } }
+  const event = await getEventBySlug(slug)
+  if (!event) return { title: "Evento no encontrado", robots: { index: false } }
 
-  const portada = urlImagenEvento(evento.portada_ruta)
-  const imagen = portada
-    ? { url: portada, alt: evento.titulo }
-    : { url: "/opengraph-image", width: 1200, height: 630, alt: `${sitio.nombre}: ${sitio.lema}` }
+  const cover = getEventImageUrl(event.cover_path)
+  const image = cover
+    ? { url: cover, alt: event.title }
+    : { url: "/opengraph-image", width: 1200, height: 630, alt: `${site.name}: ${site.tagline}` }
 
   return {
-    title: evento.titulo,
-    description: evento.resumen,
-    alternates: { canonical: `/eventos/${evento.slug}` },
+    title: event.title,
+    description: event.summary,
+    alternates: { canonical: `/eventos/${event.slug}` },
     openGraph: {
       type: "website",
       locale: "es_MX",
-      url: `/eventos/${evento.slug}`,
-      siteName: sitio.nombre,
-      title: `${evento.titulo} | ${sitio.nombreCorto}`,
-      description: evento.resumen,
-      images: [imagen],
+      url: `/eventos/${event.slug}`,
+      siteName: site.name,
+      title: `${event.title} | ${site.shortName}`,
+      description: event.summary,
+      images: [image],
     },
     twitter: {
       card: "summary_large_image",
-      title: evento.titulo,
-      description: evento.resumen,
-      images: [imagen.url],
+      title: event.title,
+      description: event.summary,
+      images: [image.url],
     },
   }
 }
 
-export default async function PaginaEvento({ params }: PageProps<"/eventos/[slug]">) {
+export default async function EventPage({ params }: PageProps<"/eventos/[slug]">) {
   const { slug } = await params
-  const evento = await obtenerEventoPorSlug(slug)
-  if (!evento) notFound()
+  const event = await getEventBySlug(slug)
+  if (!event) notFound()
 
-  const portada = urlImagenEvento(evento.portada_ruta)
-  const disponibilidad = disponibilidadEvento(evento)
-  const finalizado = disponibilidad.estado === "finalizado"
-  const conPrecio = evento.precio_publico !== null && evento.precio_publico > 0
-  const precioMiembroDistinto =
-    conPrecio && evento.precio_miembro !== null && evento.precio_miembro !== evento.precio_publico
+  const cover = getEventImageUrl(event.cover_path)
+  const availability = getEventAvailability(event)
+  const hasEnded = availability.status === "ended"
+  const hasPrice = event.public_price !== null && event.public_price > 0
+  const hasMemberPrice =
+    hasPrice && event.member_price !== null && event.member_price !== event.public_price
 
   return (
     <>
-      <JsonLd datos={datosEvento(evento)} />
+      <JsonLd data={getEventStructuredData(event)} />
 
-      <section className="relative isolate overflow-hidden bg-azul-profundo text-white">
-        {portada ? (
+      <section className="relative isolate overflow-hidden bg-brand-navy text-white">
+        {cover ? (
           <Image
-            src={portada}
+            src={cover}
             alt=""
             fill
             sizes="100vw"
@@ -91,9 +91,9 @@ export default async function PaginaEvento({ params }: PageProps<"/eventos/[slug
             className="-z-20 object-cover opacity-40"
           />
         ) : (
-          <DecoracionPuente className="absolute -right-24 -bottom-10 -z-20 w-4xl max-w-none text-white opacity-[0.06]" />
+          <BridgeDecoration className="absolute -right-24 -bottom-10 -z-20 w-4xl max-w-none text-white opacity-[0.06]" />
         )}
-        <div aria-hidden className="absolute inset-0 -z-10 bg-linear-to-t from-azul-profundo via-azul-profundo/85 to-azul-profundo/40" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-linear-to-t from-brand-navy via-brand-navy/85 to-brand-navy/40" />
 
         <div className="mx-auto max-w-6xl px-4 pt-8 pb-14 sm:px-6 lg:pt-12 lg:pb-20">
           <Link href="/eventos" className="inline-flex items-center gap-2 rounded-md text-sm font-medium text-white/80 hover:text-white">
@@ -101,29 +101,29 @@ export default async function PaginaEvento({ params }: PageProps<"/eventos/[slug
             Todos los eventos
           </Link>
 
-          {finalizado ? (
+          {hasEnded ? (
             <p className="mt-8 w-fit rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-widest uppercase">
               Evento realizado
             </p>
           ) : null}
 
           <h1 className="mt-4 max-w-4xl font-heading text-4xl leading-[1.02] font-bold text-balance uppercase sm:text-5xl lg:text-6xl">
-            {evento.titulo}
+            {event.title}
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-pretty text-white/80">{evento.resumen}</p>
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-pretty text-white/80">{event.summary}</p>
 
           <ul className="mt-8 flex flex-col gap-3 text-white/90 sm:flex-row sm:flex-wrap sm:gap-x-8">
             <li className="flex items-center gap-2">
-              <CalendarDaysIcon className="size-5 shrink-0 text-naranja" aria-hidden />
-              {formatearFechaLarga(evento.inicia_en)}
+              <CalendarDaysIcon className="size-5 shrink-0 text-brand-orange" aria-hidden />
+              {formatLongDate(event.starts_at)}
             </li>
             <li className="flex items-center gap-2">
-              <ClockIcon className="size-5 shrink-0 text-naranja" aria-hidden />
-              {formatearHorario(evento)}
+              <ClockIcon className="size-5 shrink-0 text-brand-orange" aria-hidden />
+              {formatTimeRange(event)}
             </li>
             <li className="flex items-center gap-2">
-              <MapPinIcon className="size-5 shrink-0 text-naranja" aria-hidden />
-              {evento.lugar}
+              <MapPinIcon className="size-5 shrink-0 text-brand-orange" aria-hidden />
+              {event.venue}
             </li>
           </ul>
         </div>
@@ -131,26 +131,26 @@ export default async function PaginaEvento({ params }: PageProps<"/eventos/[slug
 
       <div className="mx-auto grid max-w-6xl items-start gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.45fr_1fr] lg:gap-14 lg:py-20">
         <div className="flex min-w-0 flex-col gap-12">
-          {evento.descripcion ? (
-            <section aria-labelledby="titulo-acerca">
-              <h2 id="titulo-acerca" className="font-heading text-2xl font-semibold text-azul uppercase">
+          {event.description ? (
+            <section aria-labelledby="about-title">
+              <h2 id="about-title" className="font-heading text-2xl font-semibold text-brand-blue uppercase">
                 Acerca del evento
               </h2>
               <div className="mt-4 text-lg leading-relaxed break-words whitespace-pre-line text-foreground/80">
-                {evento.descripcion}
+                {event.description}
               </div>
             </section>
           ) : null}
 
-          <section aria-labelledby="titulo-lugar" className="rounded-3xl bg-secondary p-6 sm:p-8">
-            <h2 id="titulo-lugar" className="font-heading text-2xl font-semibold text-azul uppercase">
+          <section aria-labelledby="venue-title" className="rounded-3xl bg-secondary p-6 sm:p-8">
+            <h2 id="venue-title" className="font-heading text-2xl font-semibold text-brand-blue uppercase">
               Cómo llegar
             </h2>
-            <p className="mt-3 text-lg font-medium">{evento.lugar}</p>
-            {evento.direccion ? <p className="mt-1 text-foreground/70">{evento.direccion}</p> : null}
-            {evento.mapa_url ? (
+            <p className="mt-3 text-lg font-medium">{event.venue}</p>
+            {event.address ? <p className="mt-1 text-foreground/70">{event.address}</p> : null}
+            {event.map_url ? (
               <a
-                href={evento.mapa_url}
+                href={event.map_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(buttonVariants({ variant: "outline", size: "xl" }), "mt-5 bg-white")}
@@ -162,72 +162,72 @@ export default async function PaginaEvento({ params }: PageProps<"/eventos/[slug
             ) : null}
           </section>
 
-          <GaleriaEvento fotos={evento.fotos} titulo={evento.titulo} />
+          <EventGallery photos={event.photos} title={event.title} />
         </div>
 
-        <aside id="registro" aria-labelledby="titulo-registro" className="lg:sticky lg:top-24">
-          <div className="rounded-3xl bg-white p-6 shadow-xl ring-1 shadow-azul/5 ring-azul/10 sm:p-8">
-            <h2 id="titulo-registro" className="font-heading text-2xl font-semibold text-azul uppercase">
-              {finalizado ? "Gracias por acompañarnos" : "Registro"}
+        <aside id="registro" aria-labelledby="registration-title" className="lg:sticky lg:top-24">
+          <div className="rounded-3xl bg-white p-6 shadow-xl ring-1 shadow-brand-blue/5 ring-brand-blue/10 sm:p-8">
+            <h2 id="registration-title" className="font-heading text-2xl font-semibold text-brand-blue uppercase">
+              {hasEnded ? "Gracias por acompañarnos" : "Registro"}
             </h2>
 
-            {!finalizado ? (
+            {!hasEnded ? (
               <dl className="mt-5 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-secondary p-4">
                   <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    {precioMiembroDistinto ? "Público" : "Entrada"}
+                    {hasMemberPrice ? "Público" : "Entrada"}
                   </dt>
-                  <dd className="mt-1 font-heading text-2xl font-bold text-azul tabular-nums">
-                    {conPrecio ? formatearPrecio(evento.precio_publico!) : "Libre"}
+                  <dd className="mt-1 font-heading text-2xl font-bold text-brand-blue tabular-nums">
+                    {hasPrice ? formatPrice(event.public_price!) : "Libre"}
                   </dd>
                 </div>
-                {precioMiembroDistinto ? (
-                  <div className="rounded-2xl bg-naranja/10 p-4">
+                {hasMemberPrice ? (
+                  <div className="rounded-2xl bg-brand-orange/10 p-4">
                     <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Miembros</dt>
-                    <dd className="mt-1 font-heading text-2xl font-bold text-azul tabular-nums">
-                      {formatearPrecio(evento.precio_miembro!)}
+                    <dd className="mt-1 font-heading text-2xl font-bold text-brand-blue tabular-nums">
+                      {formatPrice(event.member_price!)}
                     </dd>
                   </div>
-                ) : disponibilidad.estado === "abierto" && disponibilidad.restantes !== null ? (
+                ) : availability.status === "open" && availability.remaining !== null ? (
                   <div className="rounded-2xl bg-secondary p-4">
                     <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Lugares</dt>
-                    <dd className="mt-1 font-heading text-2xl font-bold text-azul tabular-nums">{disponibilidad.restantes}</dd>
+                    <dd className="mt-1 font-heading text-2xl font-bold text-brand-blue tabular-nums">{availability.remaining}</dd>
                   </div>
                 ) : null}
               </dl>
             ) : null}
 
-            {disponibilidad.estado === "abierto" && disponibilidad.restantes !== null && precioMiembroDistinto ? (
+            {availability.status === "open" && availability.remaining !== null && hasMemberPrice ? (
               <p
                 className={cn(
                   "mt-4 flex items-center gap-2 text-sm",
-                  disponibilidad.restantes <= UMBRAL_ULTIMOS_LUGARES ? "font-semibold text-naranja" : "text-muted-foreground"
+                  availability.remaining <= LAST_SPOTS_THRESHOLD ? "font-semibold text-brand-orange" : "text-muted-foreground"
                 )}
               >
                 <UsersRoundIcon className="size-4" aria-hidden />
-                {disponibilidad.restantes === 1 ? "Queda 1 lugar" : `Quedan ${disponibilidad.restantes} lugares`}
+                {availability.remaining === 1 ? "Queda 1 lugar" : `Quedan ${availability.remaining} lugares`}
               </p>
             ) : null}
 
             <div className="mt-6">
-              {disponibilidad.estado === "abierto" ? (
-                <FormularioRegistroEvento eventoId={evento.id} slug={evento.slug} />
+              {availability.status === "open" ? (
+                <EventRegistrationForm eventId={event.id} slug={event.slug} />
               ) : (
                 <div className="flex flex-col gap-4">
                   <p className="leading-relaxed text-foreground/75">
-                    {disponibilidad.estado === "lleno"
+                    {availability.status === "full"
                       ? "El cupo de este evento ya está lleno. Síguenos en redes por si se liberan lugares o para enterarte del próximo."
-                      : disponibilidad.estado === "cerrado"
+                      : availability.status === "closed"
                         ? "El registro en línea para este evento ya está cerrado."
                         : "Este evento ya se realizó. Mira las fotos y entérate del siguiente en nuestras redes."}
                   </p>
                   <a
-                    href={sitio.redes.instagram}
+                    href={site.social.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={buttonVariants({ variant: "acento", size: "xl" })}
+                    className={buttonVariants({ variant: "accent", size: "xl" })}
                   >
-                    <IconoInstagram className="size-5" />
+                    <InstagramIcon className="size-5" />
                     Seguir en Instagram
                   </a>
                 </div>

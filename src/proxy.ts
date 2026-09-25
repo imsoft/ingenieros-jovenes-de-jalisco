@@ -1,12 +1,12 @@
 import type { NextRequest } from "next/server"
 
-import { actualizarSesion } from "@/lib/supabase/proxy"
+import { updateSession } from "@/lib/supabase/proxy"
 
 export async function proxy(request: NextRequest) {
-  return actualizarSesion(request)
+  return updateSession(request)
 }
 
-// Solo las zonas con sesión (panel y red de miembros) pagan el costo del proxy.
+// Only the areas with a session (panel and member network) pay the cost of the proxy.
 export const config = {
   matcher: [
     "/panel",

@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next"
 
-import { sitio } from "@/content/sitio"
+import { site } from "@/content/site"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: sitio.nombre,
+    name: site.name,
     short_name: "Ingenieros Jóvenes",
-    description: sitio.descripcion,
+    description: site.description,
     lang: "es-MX",
     start_url: "/",
     display: "standalone",
