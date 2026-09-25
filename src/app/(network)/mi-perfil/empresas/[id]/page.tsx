@@ -34,9 +34,13 @@ export default async function EditCompanyPage({ params }: PageProps<"/mi-perfil/
             jobTitle: company.job_title ?? "",
             sector: company.sector ?? "",
             description: company.description ?? "",
-            services: company.services.join(", "),
+            services: company.services,
             municipality: company.municipality ?? "",
+            address: company.address ?? "",
             websiteUrl: company.website_url ?? "",
+            linkedinUrl: company.linkedin_url ?? "",
+            instagramHandle: company.instagram_handle ?? "",
+            facebookUrl: company.facebook_url ?? "",
             logoPath: company.logo_path ?? "",
           }}
         />

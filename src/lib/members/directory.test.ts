@@ -20,7 +20,11 @@ const company = (id: string, user_id: string, name: string, extra: Record<string
   description: null,
   services: [] as string[],
   municipality: null,
+  address: null as string | null,
   website_url: null,
+  linkedin_url: null,
+  instagram_handle: null,
+  facebook_url: null,
   logo_path: null,
   ...extra,
 })

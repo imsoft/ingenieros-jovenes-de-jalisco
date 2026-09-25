@@ -72,6 +72,10 @@ export async function saveCompany(companyId: string | null, _prevState: CompanyF
     description: getText(formData, "description"),
     services: getText(formData, "services"),
     municipality: getText(formData, "municipality"),
+    address: getText(formData, "address"),
+    linkedinUrl: getText(formData, "linkedinUrl"),
+    instagramHandle: getText(formData, "instagramHandle"),
+    facebookUrl: getText(formData, "facebookUrl"),
     websiteUrl: getText(formData, "websiteUrl"),
     logoPath: getText(formData, "logoPath"),
   })
@@ -92,7 +96,11 @@ export async function saveCompany(companyId: string | null, _prevState: CompanyF
     description: data.description,
     services: data.services,
     municipality: data.municipality,
+    address: data.address,
     website_url: data.websiteUrl,
+    linkedin_url: data.linkedinUrl,
+    instagram_handle: data.instagramHandle,
+    facebook_url: data.facebookUrl,
     logo_path: data.logoPath,
   }
 

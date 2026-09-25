@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { instagramHandleField, linkedinUrlField } from "@/lib/validations/profile"
+
 // Optional text field: trims whitespace and stores null when empty.
 const optional = (max: number) =>
   z
@@ -20,10 +22,11 @@ export const companyRoleLabels: Record<CompanyRole, string> = {
   freelance: "Independiente",
 }
 
-export const MAX_SERVICES = 8
+export const MAX_SERVICE_LENGTH = 60
 export const MAX_COMPANIES = 5
 
-// "Diseño estructural, supervisión; BIM" → ["Diseño estructural", "Supervisión", "BIM"] (unique, capped).
+// "Diseño estructural, supervisión; BIM" → ["Diseño estructural", "Supervisión", "BIM"] (unique, capitalized).
+// The form sends one service per line; commas and semicolons are still accepted.
 export function parseServices(value: string) {
   const seen = new Set<string>()
   const services: string[] = []
@@ -46,11 +49,11 @@ export const companySchema = z.object({
   services: z
     .string()
     .transform(parseServices)
-    .refine((services) => services.length <= MAX_SERVICES, { message: `Máximo ${MAX_SERVICES} servicios.` })
-    .refine((services) => services.every((service) => service.length <= 40), {
-      message: "Cada servicio debe tener máximo 40 caracteres.",
+    .refine((services) => services.every((service) => service.length <= MAX_SERVICE_LENGTH), {
+      message: `Cada servicio debe tener máximo ${MAX_SERVICE_LENGTH} caracteres.`,
     }),
   municipality: optional(80),
+  address: optional(200),
   websiteUrl: z
     .string()
     .trim()
@@ -58,6 +61,17 @@ export const companySchema = z.object({
     .transform(withProtocol)
     .refine((value) => !value || z.url({ protocol: /^https?$/ }).safeParse(value).success, {
       message: "Escribe una dirección web válida.",
+    })
+    .transform((value) => value || null),
+  linkedinUrl: linkedinUrlField("Pega el enlace de la página de LinkedIn (linkedin.com/company/…)."),
+  instagramHandle: instagramHandleField("Escribe el usuario de Instagram de la empresa."),
+  facebookUrl: z
+    .string()
+    .trim()
+    .max(300, "El enlace es demasiado largo.")
+    .transform(withProtocol)
+    .refine((value) => !value || /^https:\/\/([a-z0-9-]+\.)?(facebook|fb)\.com\/./i.test(value), {
+      message: "Pega el enlace de la página de Facebook (facebook.com/…).",
     })
     .transform((value) => value || null),
   logoPath: z

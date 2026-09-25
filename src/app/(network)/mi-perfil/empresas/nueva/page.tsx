@@ -28,7 +28,7 @@ export default async function NewCompanyPage() {
         <CompanyForm
           companyId={null}
           initialLogoUrl={null}
-          values={{ name: "", role: "employee", jobTitle: "", sector: "", description: "", services: "", municipality: profile.municipality ?? "", websiteUrl: "", logoPath: "" }}
+          values={{ name: "", role: "employee", jobTitle: "", sector: "", description: "", services: [], municipality: profile.municipality ?? "", address: "", websiteUrl: "", linkedinUrl: "", instagramHandle: "", facebookUrl: "", logoPath: "" }}
         />
       </div>
     </div>

@@ -179,6 +179,13 @@ set role authenticated;
 select tests.act_as('00000000-0000-0000-0000-000000000001');
 insert into public.member_companies (user_id, name, role, sector) values (auth.uid(), 'Constructora Uno', 'owner', 'Construcción');
 select tests.ok(true, 'M1 adds a company to their profile');
+update public.member_companies
+  set services = array(select 'Servicio ' || n from generate_series(1, 12) n),
+      address = 'Av. Vallarta 1234', instagram_handle = 'constructora.uno',
+      facebook_url = 'https://facebook.com/constructorauno', linkedin_url = 'https://linkedin.com/company/constructora-uno'
+  where name = 'Constructora Uno';
+select tests.ok((select cardinality(services) = 12 and address is not null from public.member_companies where name = 'Constructora Uno'), 'M1 saves address, social networks and any number of services');
+select tests.fails($$update public.member_companies set facebook_url = 'https://evil.io/x' where name = 'Constructora Uno'$$, 'check constraint', 'company social links must point to their network');
 select tests.fails($$insert into public.member_companies (user_id, name) values ('00000000-0000-0000-0000-000000000003', 'Fake')$$, 'row-level security', 'M1 cannot add a company to someone else''s profile');
 select tests.fails($$update public.member_companies set user_id = '00000000-0000-0000-0000-000000000003' where user_id = auth.uid()$$, 'permission denied', 'a company cannot be moved to another member')
 ;

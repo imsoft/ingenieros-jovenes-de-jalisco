@@ -276,11 +276,21 @@ async function companiesAndContactFlow() {
   await click("#company-role-owner")
   await type("input[name=jobTitle]", "Fundadora")
   await type("input[name=sector]", "Manufactura e industria")
-  await type("input[name=services]", "prototipos, impresión 3D; prototipos")
+  await type("#company-services", "prototipos, impresión 3D; prototipos, ")
+  check(await evaluate(`!!document.querySelector('[aria-label="Quitar Prototipos"]') && !!document.querySelector('[aria-label="Quitar Impresión 3D"]')`), "typed services turn into removable chips")
+  await type("#company-address", "Av. Vallarta 1234, Col. Americana")
+  await type("#company-instagramHandle", "@taller.valeria")
+  check((await evaluate(`document.querySelector("#company-instagramHandle").value`)) === "taller.valeria", "the Instagram field keeps the @ fixed outside the input")
+  await type("#company-facebookUrl", "facebook.com/tallervaleria")
   await clickText("Agregar empresa", "document.querySelector('form')")
   await waitFor(`location.search.includes("notice=company-added")`, 10000)
   await browser.waitForLoad()
   check((await alertText()).includes("Empresa agregada"), "adding a company returns to My profile with a confirmation")
+  check(
+    sql(`select address || '|' || instagram_handle || '|' || facebook_url from member_companies where user_id = '${userId}' and name = 'Taller Valeria'`) ===
+      "Av. Vallarta 1234, Col. Americana|taller.valeria|https://facebook.com/tallervaleria",
+    "the company address and social networks are saved"
+  )
   const company = sql(`select role || '|' || array_to_string(services, ',') || '|' || coalesce(logo_path, '') from member_companies where user_id = '${userId}' and name = 'Taller Valeria'`)
   const [role, services, logoPath] = company.split("|")
   check(role === "owner" && services === "Prototipos,Impresión 3D", "role and services are saved (services cleaned and deduplicated)", company)
@@ -289,14 +299,17 @@ async function companiesAndContactFlow() {
   await clickExpression(`document.querySelector('[aria-label="Editar Taller Valeria"]')`, "Edit company")
   await waitFor(`location.pathname.startsWith("/mi-perfil/empresas/")`)
   await browser.waitForLoad()
-  await type("input[name=services]", "Prototipos, Impresión 3D, Moldes")
+  await type("#company-services", "Moldes, Inyección, Maquinado, Soldadura, Pintura, Ensamble, Diseño, ")
+  await type("#company-services", "Pruebas") // still typed, not added: it is saved anyway
   await clickText("Guardar cambios", "document.querySelector('form')")
   await waitFor(`location.search.includes("notice=company-updated")`, 10000)
   await browser.waitForLoad()
-  check(sql(`select array_length(services, 1) from member_companies where user_id = '${userId}' and name = 'Taller Valeria'`) === "3", "editing a company updates it")
+  check(sql(`select array_length(services, 1) from member_companies where user_id = '${userId}' and name = 'Taller Valeria'`) === "10", "editing a company updates it, with no cap on services")
 
   // Direct contact: shared by Valeria, not shared by Diego (seed).
   await goto("/mi-perfil")
+  await type("#profile-bio", "Hola")
+  check((await textOf("#profile-bio-count")) === "4/1000", "the About you field counts characters", await textOf("#profile-bio-count"))
   await type("input[name=whatsapp]", "33 4444 5555")
   await click("#profile-showContact")
   await clickText("Guardar cambios")
@@ -307,6 +320,10 @@ async function companiesAndContactFlow() {
   await goto(`/miembros/${userId}`)
   check(await evaluate(`!!document.querySelector('a[href="https://wa.me/523344445555"]')`), "other members see a WhatsApp button for a shared contact")
   check((await textOf("h2 ~ ul h3, section h3")).includes("Taller Valeria"), "and the member's companies on the profile")
+  check(
+    await evaluate(`!!document.querySelector('a[href^="https://www.google.com/maps/search/"]') && !!document.querySelector('a[href="https://www.instagram.com/taller.valeria"]')`),
+    "the company card links its address to Google Maps and its social networks"
+  )
   await signIn("valeria@cijj.test")
   await goto(`/miembros/${accounts.ids["diego@cijj.test"]}`)
   check(!(await evaluate(`!!document.querySelector('a[href^="https://wa.me/"]')`)), "a contact that is not shared never shows")

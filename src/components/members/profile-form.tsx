@@ -33,9 +33,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { suggestedMunicipalities } from "@/content/site"
 import type { ProfileField, ProfileFormState } from "@/lib/validations/profile"
 
+import { CharacterCount, HandleInput } from "./form-inputs"
 import { ACCEPTED_IMAGE_TYPES, useImageUpload } from "./use-image-upload"
 
 const initialState: ProfileFormState = { status: "idle" }
+const BIO_MAX = 1000
 
 const normalize = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
 const matchesMunicipality = (municipality: string, query: string) => normalize(municipality).includes(normalize(query))
@@ -160,6 +162,7 @@ export function ProfileForm({
   const [fullName, setFullName] = useState(values.fullName)
   const [municipality, setMunicipality] = useState(values.municipality)
   const [photo, setPhoto] = useState({ path: values.photoPath, url: initialPhotoUrl })
+  const [bioLength, setBioLength] = useState(values.bio.length)
   const errors = state.status === "error" ? state.errors : {}
 
   useEffect(() => {
@@ -241,12 +244,15 @@ export function ProfileForm({
               id="profile-bio"
               name="bio"
               rows={5}
-              maxLength={1000}
+              maxLength={BIO_MAX}
               defaultValue={values.bio}
+              onChange={(event) => setBioLength(event.target.value.length)}
+              aria-describedby="profile-bio-count"
               placeholder="Cuéntale al Colectivo quién eres, qué te apasiona y en qué te gustaría colaborar."
               className="rounded-xl px-4 py-3"
               aria-invalid={errors.bio ? true : undefined}
             />
+            <CharacterCount id="profile-bio-count" length={bioLength} max={BIO_MAX} />
             <FieldError>{errors.bio?.[0]}</FieldError>
           </Field>
         </FieldGroup>
@@ -281,7 +287,11 @@ export function ProfileForm({
             defaultValue={values.linkedinUrl}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextField name="instagramHandle" label="Instagram" errors={errors} spellCheck={false} placeholder="@tu_usuario" defaultValue={values.instagramHandle} />
+            <Field data-invalid={errors.instagramHandle ? true : undefined}>
+              <FieldLabel htmlFor="profile-instagramHandle">Instagram</FieldLabel>
+              <HandleInput id="profile-instagramHandle" name="instagramHandle" defaultValue={values.instagramHandle} invalid={Boolean(errors.instagramHandle)} />
+              <FieldError>{errors.instagramHandle?.[0]}</FieldError>
+            </Field>
             <TextField
               name="websiteUrl"
               label="Sitio web"

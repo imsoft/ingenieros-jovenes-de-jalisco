@@ -14,7 +14,11 @@ export type Company = {
   description: string | null
   services: string[]
   municipality: string | null
+  address: string | null
   website_url: string | null
+  linkedin_url: string | null
+  instagram_handle: string | null
+  facebook_url: string | null
   logo_path: string | null
   sort_order: number
   created_at: string
@@ -23,7 +27,7 @@ export type Company = {
 export type Contact = { whatsapp: string | null; email: string | null; is_visible: boolean }
 
 const COLUMNS =
-  "id, user_id, name, role, job_title, sector, description, services, municipality, website_url, logo_path, sort_order, created_at"
+  "id, user_id, name, role, job_title, sector, description, services, municipality, address, website_url, linkedin_url, instagram_handle, facebook_url, logo_path, sort_order, created_at"
 
 // Logos live in the member's folder of the profiles bucket: {user_id}/companies/{uuid}.ext
 export const companyLogoFolder = (userId: string) => `${userId}/companies`

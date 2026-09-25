@@ -63,7 +63,11 @@ export default async function CompaniesPage({ searchParams }: PageProps<"/miembr
                   description: group.description,
                   services: group.services,
                   municipality: group.municipality,
+                  address: group.address,
                   website_url: group.websiteUrl,
+                  linkedin_url: group.linkedinUrl,
+                  instagram_handle: group.instagramHandle,
+                  facebook_url: group.facebookUrl,
                   logoUrl: getCompanyLogoUrl(group.logoPath),
                 }}
                 footer={

@@ -12,7 +12,11 @@ type DirectoryCompany = {
   description: string | null
   services: string[]
   municipality: string | null
+  address: string | null
   website_url: string | null
+  linkedin_url: string | null
+  instagram_handle: string | null
+  facebook_url: string | null
   logo_path: string | null
 }
 
@@ -77,7 +81,11 @@ export type CompanyGroup<C extends DirectoryCompany> = {
   sector: string | null
   municipality: string | null
   description: string | null
+  address: string | null
   websiteUrl: string | null
+  linkedinUrl: string | null
+  instagramHandle: string | null
+  facebookUrl: string | null
   logoPath: string | null
   services: string[]
   entries: C[]
@@ -103,7 +111,11 @@ export function groupCompanies<C extends DirectoryCompany>(companies: C[], filte
         sector: pick("sector") as string | null,
         municipality: pick("municipality") as string | null,
         description: pick("description") as string | null,
+        address: pick("address") as string | null,
         websiteUrl: pick("website_url") as string | null,
+        linkedinUrl: pick("linkedin_url") as string | null,
+        instagramHandle: pick("instagram_handle") as string | null,
+        facebookUrl: pick("facebook_url") as string | null,
         logoPath: pick("logo_path") as string | null,
         services: distinctValues(ranked.flatMap((entry) => entry.services)),
         entries: ranked,

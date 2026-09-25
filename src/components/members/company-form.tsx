@@ -33,11 +33,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { companySectors, suggestedMunicipalities } from "@/content/site"
-import { companyRoleLabels, companyRoles, type CompanyField, type CompanyFormState, type CompanyRole } from "@/lib/validations/company"
+import { companyRoleLabels, companyRoles, MAX_SERVICE_LENGTH, type CompanyField, type CompanyFormState, type CompanyRole } from "@/lib/validations/company"
 
+import { CharacterCount, HandleInput, TagInput } from "./form-inputs"
 import { ACCEPTED_IMAGE_TYPES, useImageUpload } from "./use-image-upload"
 
 const initialState: CompanyFormState = { status: "idle" }
+const DESCRIPTION_MAX = 600
 
 const normalize = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
 const matches = (option: string, query: string) => normalize(option).includes(normalize(query))
@@ -48,9 +50,13 @@ export type CompanyFormValues = {
   jobTitle: string
   sector: string
   description: string
-  services: string
+  services: string[]
   municipality: string
+  address: string
   websiteUrl: string
+  linkedinUrl: string
+  instagramHandle: string
+  facebookUrl: string
   logoPath: string
 }
 
@@ -183,6 +189,7 @@ export function CompanyForm({ companyId, values, initialLogoUrl }: { companyId: 
   const noticeRef = useRef<HTMLDivElement>(null)
   const [name, setName] = useState(values.name)
   const [logo, setLogo] = useState({ path: values.logoPath, url: initialLogoUrl })
+  const [descriptionLength, setDescriptionLength] = useState(values.description.length)
   const errors = state.status === "error" ? state.errors : {}
 
   useEffect(() => {
@@ -239,28 +246,66 @@ export function CompanyForm({ companyId, values, initialLogoUrl }: { companyId: 
             id="company-description"
             name="description"
             rows={4}
-            maxLength={600}
+            maxLength={DESCRIPTION_MAX}
             defaultValue={values.description}
+            onChange={(event) => setDescriptionLength(event.target.value.length)}
+            aria-describedby="company-description-count"
             placeholder="Cuéntale al Colectivo a qué se dedica, a quién atiende y qué la distingue."
             className="rounded-xl px-4 py-3"
             aria-invalid={errors.description ? true : undefined}
           />
+          <CharacterCount id="company-description-count" length={descriptionLength} max={DESCRIPTION_MAX} />
           <FieldError>{errors.description?.[0]}</FieldError>
         </Field>
-        <TextField
-          name="services"
-          label="Servicios o productos"
-          errors={errors}
-          maxLength={400}
-          placeholder="Diseño estructural, supervisión de obra, BIM"
-          description="Sepáralos con comas. Hasta 8; así te encuentran en el directorio."
-          defaultValue={values.services}
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <SuggestField name="municipality" label="Municipio" errors={errors} options={suggestedMunicipalities} defaultValue={values.municipality} placeholder="Escribe o elige…" icon={MapPinIcon} />
-          <TextField name="websiteUrl" label="Sitio web" errors={errors} type="url" inputMode="url" spellCheck={false} placeholder="tuempresa.com" defaultValue={values.websiteUrl} />
-        </div>
+        <Field data-invalid={errors.services ? true : undefined}>
+          <FieldLabel htmlFor="company-services">Servicios o productos</FieldLabel>
+          <TagInput
+            id="company-services"
+            name="services"
+            itemLabel="Servicios"
+            defaultValue={values.services}
+            maxLength={MAX_SERVICE_LENGTH}
+            placeholder="Ej. Diseño estructural"
+            describedBy="company-services-hint"
+            invalid={Boolean(errors.services)}
+          />
+          <FieldDescription id="company-services-hint">Escribe uno y presiona Enter o Agregar. Así te encuentran en el directorio.</FieldDescription>
+          <FieldError>{errors.services?.[0]}</FieldError>
+        </Field>
       </FieldGroup>
+
+      <FieldSet>
+        <FieldLegend className="font-heading text-lg text-brand-blue uppercase">Ubicación</FieldLegend>
+        <FieldGroup className="gap-4">
+          <TextField
+            name="address"
+            label="Dirección"
+            errors={errors}
+            maxLength={200}
+            autoComplete="street-address"
+            placeholder="Calle, número y colonia"
+            description="Solo la ven los miembros. Déjala vacía si trabajas desde casa."
+            defaultValue={values.address}
+          />
+          <SuggestField name="municipality" label="Municipio" errors={errors} options={suggestedMunicipalities} defaultValue={values.municipality} placeholder="Escribe o elige…" icon={MapPinIcon} />
+        </FieldGroup>
+      </FieldSet>
+
+      <FieldSet>
+        <FieldLegend className="font-heading text-lg text-brand-blue uppercase">Sitio web y redes</FieldLegend>
+        <FieldGroup className="gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField name="websiteUrl" label="Sitio web" errors={errors} type="url" inputMode="url" spellCheck={false} placeholder="tuempresa.com" defaultValue={values.websiteUrl} />
+            <Field data-invalid={errors.instagramHandle ? true : undefined}>
+              <FieldLabel htmlFor="company-instagramHandle">Instagram</FieldLabel>
+              <HandleInput id="company-instagramHandle" name="instagramHandle" placeholder="tu_empresa" defaultValue={values.instagramHandle} invalid={Boolean(errors.instagramHandle)} />
+              <FieldError>{errors.instagramHandle?.[0]}</FieldError>
+            </Field>
+            <TextField name="facebookUrl" label="Facebook" errors={errors} type="url" inputMode="url" spellCheck={false} placeholder="facebook.com/tuempresa" defaultValue={values.facebookUrl} />
+            <TextField name="linkedinUrl" label="LinkedIn" errors={errors} type="url" inputMode="url" spellCheck={false} placeholder="linkedin.com/company/tuempresa" defaultValue={values.linkedinUrl} />
+          </div>
+        </FieldGroup>
+      </FieldSet>
 
       {state.status === "error" ? (
         <Notice ref={noticeRef} tabIndex={-1} variant="error" className="outline-none">
