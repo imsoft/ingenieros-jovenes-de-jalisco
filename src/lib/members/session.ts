@@ -29,7 +29,7 @@ export const getMemberAccess = cache(async (): Promise<MemberAccess> => {
 
   const [{ data: isMember, error }, { data: boardMember }] = await Promise.all([
     supabase.rpc("am_i_member"),
-    supabase.from("board_members").select("is_active, role").eq("user_id", claims.sub).maybeSingle(),
+    supabase.from("board_members").select("is_active, role, full_name").eq("user_id", claims.sub).maybeSingle(),
   ])
 
   if (error) console.error("[members] Could not verify membership:", error.code, error.message)
@@ -46,7 +46,8 @@ export const getMemberAccess = cache(async (): Promise<MemberAccess> => {
     member: {
       userId: claims.sub,
       email,
-      suggestedName: metadataName?.trim() ?? email?.split("@")[0] ?? "Miembro",
+      // Board members without a profile yet are shown with the name the Consejo registered.
+      suggestedName: metadataName?.trim() ?? boardMember?.full_name ?? email?.split("@")[0] ?? "Miembro",
       isBoardMember: Boolean(boardMember?.is_active),
       isBoardAdmin: Boolean(boardMember?.is_active && boardMember.role === "admin"),
     },
