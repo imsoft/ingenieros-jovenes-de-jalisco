@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Supabase CLI (local cache)
 supabase/.temp/
+
+# End-to-end test artifacts (screenshots on failure)
+e2e/.artifacts/

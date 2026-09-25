@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:db": "bash supabase/tests/run.sh",
-    "emails:supabase": "UPDATE_EMAIL_TEMPLATES=1 vitest run src/lib/email/auth-templates.test.ts"
+    "emails:supabase": "UPDATE_EMAIL_TEMPLATES=1 vitest run src/lib/email/auth-templates.test.ts",
+    "test:e2e": "bash e2e/run.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

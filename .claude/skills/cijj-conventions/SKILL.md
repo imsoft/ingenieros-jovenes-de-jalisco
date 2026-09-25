@@ -114,4 +114,5 @@ Website of the **Colectivo de Ingenieros Jóvenes de Jalisco A.C.** (founded Jan
 - Package manager: **pnpm**, pinned in `package.json`. TypeScript 6.0 and ESLint 9 on purpose (typescript-eslint and eslint-plugin-react compatibility).
 - Unit tests with Vitest (`pnpm test`), `*.test.ts` next to the module. Every new validation, template or helper gets a test.
 - SQL permission tests: `pnpm test:db` (disposable local Postgres, `supabase/tests/`). Every new policy or function gets a scenario.
+- End-to-end flows: `pnpm test:e2e` (local Supabase + real Chrome, `e2e/`). Every new user-facing flow gets a function in `e2e/flows.mjs`.
 - Verification: see skill `run-and-verify`.

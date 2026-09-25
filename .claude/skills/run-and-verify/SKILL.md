@@ -17,6 +17,7 @@ Run from the repo root. Package manager: **pnpm**.
 | Lint | `pnpm lint` (must finish without errors) |
 | Unit tests | `pnpm test` |
 | SQL permission tests (local Postgres) | `pnpm test:db` |
+| End-to-end flows (local Supabase + real Chrome) | `pnpm test:e2e` (~2 min) |
 | Regenerate Supabase email templates | `pnpm emails:supabase` |
 | Production build | `pnpm build` |
 | Serve the build | `pnpm start -p 3100` |
@@ -25,14 +26,19 @@ Without `.env.local`, the membership form simulates success in development witho
 
 ## Minimum verification before finishing
 
-1. `pnpm lint`, `pnpm exec tsc --noEmit` and `pnpm test` without errors (`pnpm test:db` when SQL changed).
+1. `pnpm lint`, `pnpm exec tsc --noEmit` and `pnpm test` without errors (`pnpm test:db` when SQL changed, `pnpm test:e2e` when auth, profiles, the panel, events or emails changed).
 2. `pnpm build` completes and lists the expected routes.
 3. Visual check of the affected pages on desktop and mobile (below).
 4. Report honestly what could not be tested (e.g. real Supabase writes without credentials).
 
-## Local Supabase for end-to-end checks
+## End-to-end tests (`pnpm test:e2e`)
 
-`pnpm dlx supabase@latest start` in a scratch folder with the repo migrations and templates gives real Auth, Storage and Mailpit (http://127.0.0.1:54324). Recent CLI versions are needed for security notifications. Build the app against it by exporting `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` before `pnpm build`, and rebuild with the normal env afterwards.
+`e2e/run.sh` spins up a disposable local Supabase (Docker, latest CLI via `pnpm dlx`) with the repo migrations, branded templates, sign-up hook and security notifications; seeds members, board and an event (`e2e/seed.mjs`); builds the app against it; and drives headless Chrome through `e2e/flows.mjs`: sign-up and email confirmation (via Mailpit), profile photos, password reset, board management and moderation, account deletion and unused photo cleanup.
+
+- Requirements: Docker running, `psql`, Google Chrome (or `CHROME_PATH`). Port 3123 must be free (`E2E_APP_PORT` to change it) and no other local Supabase stack on the default ports.
+- Everything is removed at the end: Supabase containers and volumes, the app server and the `.next` build (route types are regenerated so `tsc` keeps working).
+- On failure a screenshot lands in `e2e/.artifacts/failure.png`; `E2E_KEEP=1 pnpm test:e2e` leaves the app and Supabase running to debug.
+- New user-facing flows get a function in `e2e/flows.mjs`; assert the Spanish UI copy, write everything else in English.
 
 ## Screenshots with headless Chrome
 
