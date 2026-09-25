@@ -6,6 +6,8 @@ import { cn } from "cn"
 
 import { moderateProfile } from "@/actions/board"
 import { CompanyCard } from "@/components/members/company-card"
+import { MemberBadges } from "@/components/members/member-badges"
+import { listBadges } from "@/lib/members/badge-queries"
 import { ConfirmButton } from "@/components/panel/confirm-button"
 import { Notice } from "@/components/site/notice"
 import { MemberAvatar } from "@/components/members/member-avatar"
@@ -25,7 +27,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/miembros
   const member = await requireMember(`/miembros/${id}`)
   if (!isUuid(id)) notFound()
 
-  const [profile, companies, contact] = await Promise.all([getProfile(id), listCompaniesForUser(id), getContact(id)])
+  const [profile, companies, contact, badges] = await Promise.all([getProfile(id), listCompaniesForUser(id), getContact(id), listBadges([id])])
   if (!profile) notFound()
 
   const isOwn = profile.user_id === member.userId
@@ -109,6 +111,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/miembros
           ) : null}
 
           <h1 className="mt-4 font-heading text-3xl font-bold text-brand-blue uppercase">{profile.full_name}</h1>
+          <MemberBadges badges={badges.get(profile.user_id)} className="mt-2" />
           {profile.specialty ? <p className="mt-1 text-lg text-brand-orange">{profile.specialty}</p> : null}
           {profile.headline ? <p className="mt-3 text-lg leading-relaxed text-foreground/85">{profile.headline}</p> : null}
 

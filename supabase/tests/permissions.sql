@@ -235,4 +235,32 @@ select tests.fails($$select * from public.member_companies$$, 'permission denied
 select tests.fails($$select * from public.profile_contacts$$, 'permission denied', 'anonymous cannot read contacts');
 reset role;
 
+-- ---------------------------------------------------------------- badges
+-- Board at this point: C is the admin; A and M1 are active reviewers; B is inactive.
+set role authenticated;
+select tests.act_as('00000000-0000-0000-0000-00000000000c');
+select public.set_board_title('00000000-0000-0000-0000-000000000001', '  Secretaria  ');
+select tests.ok((select title from public.list_board() where user_id = '00000000-0000-0000-0000-000000000001') = 'Secretaria', 'an admin sets a Consejo title (trimmed) and sees it in the panel');
+select tests.act_as('00000000-0000-0000-0000-00000000000a');
+select tests.fails($$select public.set_board_title('00000000-0000-0000-0000-000000000001', 'Presidenta')$$, 'ADMINS_ONLY', 'a reviewer cannot set Consejo titles');
+select tests.act_as('00000000-0000-0000-0000-000000000001');
+select tests.ok((select count(*) from public.list_board_badges()) = 3, 'members see the active Consejo members, not the inactive ones');
+select tests.ok(exists (select 1 from public.list_board_badges() where title = 'Secretaria'), 'and their titles');
+select tests.fails($$insert into public.member_badges (user_id, kind) values (auth.uid(), 'platform_creator')$$, 'permission denied', 'members cannot grant themselves a badge');
+select tests.act_as('00000000-0000-0000-0000-000000000009');
+select tests.ok(not exists (select 1 from public.list_board_badges()), 'accounts without membership do not see Consejo badges');
+reset role;
+
+insert into public.member_badges (user_id, kind) values ('00000000-0000-0000-0000-000000000001', 'platform_creator'), ('00000000-0000-0000-0000-000000000003', 'platform_creator');
+set role authenticated;
+select tests.act_as('00000000-0000-0000-0000-00000000000a');
+select tests.ok(exists (select 1 from public.member_badges where user_id = '00000000-0000-0000-0000-000000000001'), 'members see badges of visible profiles');
+select tests.ok(not exists (select 1 from public.member_badges where user_id = '00000000-0000-0000-0000-000000000003'), 'badges of former members are hidden');
+reset role;
+
+set role anon;
+select tests.fails($$select * from public.member_badges$$, 'permission denied', 'anonymous cannot read badges');
+select tests.fails($$select * from public.list_board_badges()$$, 'permission denied', 'anonymous cannot list Consejo badges');
+reset role;
+
 \echo ALL TESTS PASSED

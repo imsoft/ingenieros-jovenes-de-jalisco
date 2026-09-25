@@ -81,6 +81,8 @@ for (const member of members) {
   }
 }
 sql(`update public.membership_applications set status = 'rejected' where email = 'former@cijj.test'`)
+// Special badges are granted from the SQL Editor only.
+sql(`insert into public.member_badges (user_id, kind) values ('${accounts.ids["sofia@cijj.test"]}', 'platform_creator')`)
 
 writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2))
 console.log(`Seeded ${Object.keys(accounts.ids).length} accounts; board: ${sql("select string_agg(full_name || ' (' || role || ')', ', ') from public.board_members")}`)

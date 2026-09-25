@@ -177,6 +177,14 @@ async function boardFlow() {
   check((await alertText()).includes("ya tiene acceso al panel"), "adding someone with an account grants access right away")
   check(sql(`select m.role::text || m.is_active::text from board_members m join auth.users u on u.id = m.user_id where u.email = 'luis@cijj.test'`) === "reviewertrue", "they join as an active reviewer")
 
+  const luisId = accounts.ids["luis@cijj.test"]
+  const titleForm = `document.querySelector("#board-title-${luisId}").closest("form")`
+  await goto("/panel/consejo")
+  await type(`#board-title-${luisId}`, "Tesorero")
+  await clickExpression(`${titleForm}.querySelector("button[type=submit]")`, "Save Consejo title")
+  await waitFor(`${titleForm}.querySelector("[role=status]")?.textContent.includes("Cargo guardado")`)
+  check(sql(`select title from board_members where user_id = '${luisId}'`) === "Tesorero", "the admin sets a Consejo title from the panel")
+
   await type("#board-full-name", "Carla Invitada")
   await type("#board-email", "carla@cijj.test")
   await click("#board-role-admin")
@@ -222,6 +230,10 @@ async function boardFlow() {
   await signIn("sofia@cijj.test")
   await waitFor(`document.querySelector("ul h2")`)
   check(!(await textOf("ul h2")).includes("Diego"), "other members no longer see it in the directory")
+  const luisCard = await evaluate(`[...document.querySelectorAll("ul > li")].find((li) => li.querySelector("h2")?.textContent.includes("Luis"))?.textContent ?? ""`)
+  check(luisCard.includes("Tesorero del Consejo"), "Consejo members show their title as a badge in the directory", luisCard)
+  await goto(`/miembros/${accounts.ids["sofia@cijj.test"]}`)
+  check((await textOf("[aria-label=Distintivos]")).includes("Creador de la plataforma"), "special badges show on the profile")
   await goto(`/miembros/${diegoId}`)
   const body = await evaluate("document.body.innerText")
   check(body.includes("404") || body.toLowerCase().includes("not found"), "not even through its direct link")

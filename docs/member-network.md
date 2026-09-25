@@ -10,7 +10,7 @@ Zona privada donde los miembros del Colectivo inician sesión (correo/contraseñ
 
 ### 1. Migración
 
-Ejecuta en el SQL Editor, en orden, `supabase/migrations/20260924000000_member_network.sql`, `supabase/migrations/20260925000000_member_companies_and_contact.sql` (empresas y contacto directo) y `supabase/migrations/20260926000000_company_address_and_social.sql` (dirección y redes de las empresas, servicios sin límite). **Si tu proyecto ya tenía las migraciones anteriores en español**, primero sigue la sección "Migrar la base actual a inglés" de `docs/go-live.md`.
+Ejecuta en el SQL Editor, en orden, `supabase/migrations/20260924000000_member_network.sql`, `supabase/migrations/20260925000000_member_companies_and_contact.sql` (empresas y contacto directo), `supabase/migrations/20260926000000_company_address_and_social.sql` (dirección y redes de las empresas, servicios sin límite) y `supabase/migrations/20260927000000_member_badges.sql` (cargos del Consejo y distintivos). **Si tu proyecto ya tenía las migraciones anteriores en español**, primero sigue la sección "Migrar la base actual a inglés" de `docs/go-live.md`.
 
 ### 2. Activar el filtro de registro
 

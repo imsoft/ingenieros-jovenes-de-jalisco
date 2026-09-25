@@ -11,8 +11,10 @@ import { createSessionSupabaseClient } from "@/lib/supabase/session"
 import { getSiteUrl } from "@/lib/site-url"
 import {
   addBoardMemberSchema,
+  boardTitleSchema,
   getBoardErrorMessage,
   type AddBoardMemberFormState,
+  type BoardTitleFormState,
 } from "@/lib/validations/board"
 
 type ActionResult = { ok: true } | { ok: false; message: string }
@@ -75,6 +77,25 @@ export async function updateBoardMember(userId: string, role: string, isActive: 
 
   revalidateBoard()
   return { ok: true }
+}
+
+// Sets the Consejo title shown as a badge on the member's profile (e.g. "Presidente").
+export async function setBoardTitle(userId: string, _previousState: BoardTitleFormState, formData: FormData): Promise<BoardTitleFormState> {
+  await requireBoardAdmin()
+  if (!isUuid(userId)) return { status: "error", message: "Solicitud no válida." }
+
+  const result = boardTitleSchema.safeParse(formData.get("title") ?? "")
+  if (!result.success) return { status: "error", message: result.error.issues[0].message }
+
+  const supabase = await createSessionSupabaseClient()
+  const { error } = await supabase.rpc("set_board_title", { p_user_id: userId, p_title: result.data })
+  if (error) {
+    console.error("[panel] Could not set the board title:", error.code, error.message)
+    return { status: "error", message: getBoardErrorMessage(error.message, "No se pudo guardar el cargo. Inténtalo de nuevo.") }
+  }
+
+  revalidateBoard()
+  return { status: "success", message: result.data ? "Cargo guardado." : "Cargo quitado." }
 }
 
 export async function cancelBoardInvitation(email: string): Promise<ActionResult> {

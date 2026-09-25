@@ -5,6 +5,7 @@ import { cn } from "cn"
 
 import { cancelBoardInvitation, moderateProfile, updateBoardMember } from "@/actions/board"
 import { BoardMemberForm } from "@/components/panel/board-member-form"
+import { BoardTitleForm } from "@/components/panel/board-title-form"
 import { ConfirmButton } from "@/components/panel/confirm-button"
 import { Badge } from "@/components/ui/badge"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
@@ -198,32 +199,37 @@ function BoardMemberRow({ boardMember, isSelf }: { boardMember: BoardMemberListi
   const otherRole = boardMember.role === "admin" ? "reviewer" : "admin"
 
   return (
-    <li className="flex flex-col gap-3 rounded-2xl bg-white p-4 ring-1 ring-brand-blue/10 sm:flex-row sm:items-center sm:justify-between">
-      <MemberDetails boardMember={boardMember} isSelf={isSelf} />
-      <div className="flex flex-wrap gap-2">
-        <ConfirmButton
-          action={updateBoardMember.bind(null, userId, otherRole, true)}
-          title={`¿Hacer ${roleDescriptions[otherRole].name.toLowerCase()} a ${isSelf ? "ti mismo" : boardMember.full_name}?`}
-          description={roleDescriptions[otherRole].summary}
-          confirmLabel="Cambiar rol"
-          confirmVariant="default"
-          variant="outline"
-          size="sm"
-        >
-          Hacer {roleDescriptions[otherRole].name.toLowerCase()}
-        </ConfirmButton>
-        <ConfirmButton
-          action={updateBoardMember.bind(null, userId, boardMember.role, false)}
-          title={`¿Dar de baja a ${isSelf ? "ti mismo" : boardMember.full_name}?`}
-          description="Perderá el acceso al panel de inmediato. Su historial de revisiones se conserva y puedes reactivarlo después."
-          confirmLabel="Dar de baja"
-          variant="ghost"
-          size="sm"
-          className="text-destructive"
-        >
-          <UserRoundXIcon data-icon="inline-start" aria-hidden />
-          Dar de baja
-        </ConfirmButton>
+    <li className="flex flex-col gap-4 rounded-2xl bg-white p-4 ring-1 ring-brand-blue/10">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <MemberDetails boardMember={boardMember} isSelf={isSelf} />
+        <div className="flex flex-wrap gap-2">
+          <ConfirmButton
+            action={updateBoardMember.bind(null, userId, otherRole, true)}
+            title={`¿Hacer ${roleDescriptions[otherRole].name.toLowerCase()} a ${isSelf ? "ti mismo" : boardMember.full_name}?`}
+            description={roleDescriptions[otherRole].summary}
+            confirmLabel="Cambiar rol"
+            confirmVariant="default"
+            variant="outline"
+            size="sm"
+          >
+            Hacer {roleDescriptions[otherRole].name.toLowerCase()}
+          </ConfirmButton>
+          <ConfirmButton
+            action={updateBoardMember.bind(null, userId, boardMember.role, false)}
+            title={`¿Dar de baja a ${isSelf ? "ti mismo" : boardMember.full_name}?`}
+            description="Perderá el acceso al panel de inmediato. Su historial de revisiones se conserva y puedes reactivarlo después."
+            confirmLabel="Dar de baja"
+            variant="ghost"
+            size="sm"
+            className="text-destructive"
+          >
+            <UserRoundXIcon data-icon="inline-start" aria-hidden />
+            Dar de baja
+          </ConfirmButton>
+        </div>
+      </div>
+      <div className="border-t border-brand-blue/10 pt-3">
+        <BoardTitleForm userId={userId} fullName={boardMember.full_name} title={boardMember.title} />
       </div>
     </li>
   )

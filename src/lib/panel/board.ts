@@ -10,6 +10,7 @@ export type BoardMemberListing = {
   role: BoardRole
   status: "active" | "inactive" | "invited"
   since: string
+  title: string | null
 }
 
 export type ModeratedProfile = { user_id: string; full_name: string; updated_at: string }

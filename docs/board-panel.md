@@ -48,6 +48,20 @@ En **Panel → Consejo**, cada integrante tiene **Hacer administrador/revisor** 
 
 Para que un integrante pueda eliminar su propia cuenta, primero hay que darlo de baja del Consejo.
 
+## Cargos y distintivos
+
+Cada integrante activo del Consejo aparece en el directorio y en su perfil con un distintivo. En **Panel → Consejo**, el campo **Cargo en el Consejo** define el texto: "Presidente" se muestra como *Presidente del Consejo*; vacío se muestra como *Consejo Directivo*. Al dar de baja a alguien, su distintivo desaparece.
+
+Los distintivos especiales (por ahora solo *Creador de la plataforma*) no se dan desde la app, solo desde el SQL Editor:
+
+```sql
+insert into public.member_badges (user_id, kind)
+select id, 'platform_creator' from auth.users where email = 'CORREO';
+-- Quitarlo: delete from public.member_badges where kind = 'platform_creator' and user_id = (select id from auth.users where email = 'CORREO');
+```
+
+La persona necesita tener perfil creado; si no, el insert falla.
+
 ## Moderación de perfiles
 
 Un administrador puede abrir cualquier perfil del directorio y usar **Ocultar (moderación)**. El perfil deja de verse en el directorio; su dueño lo sigue viendo y editando, pero no puede volver a mostrarlo. Los perfiles ocultos se listan en **Panel → Consejo**, con la opción **Restaurar**.

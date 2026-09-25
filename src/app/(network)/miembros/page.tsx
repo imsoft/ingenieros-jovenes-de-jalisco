@@ -4,6 +4,8 @@ import { ArrowRightIcon, BriefcaseBusinessIcon, MapPinIcon, SearchXIcon, UserRou
 
 import { DirectoryFilters } from "@/components/members/directory-filters"
 import { MemberAvatar } from "@/components/members/member-avatar"
+import { MemberBadges } from "@/components/members/member-badges"
+import { listBadges } from "@/lib/members/badge-queries"
 import { buttonVariants } from "@/components/ui/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { listVisibleCompanies } from "@/lib/members/companies"
@@ -26,7 +28,12 @@ export default async function MembersPage({ searchParams }: PageProps<"/miembros
   }
   const isFiltered = Object.values(filters).some(Boolean)
 
-  const [allProfiles, companies, myProfile] = await Promise.all([listDirectoryProfiles(), listVisibleCompanies(), getProfile(member.userId)])
+  const [allProfiles, companies, myProfile, badges] = await Promise.all([
+    listDirectoryProfiles(),
+    listVisibleCompanies(),
+    getProfile(member.userId),
+    listBadges(),
+  ])
   const profiles = filterDirectory(allProfiles, companies, filters)
   const companiesByUser = groupByUser(companies)
   const total = allProfiles.length
@@ -100,6 +107,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/miembros
                     {profile.specialty ? <p className="truncate text-sm text-muted-foreground">{profile.specialty}</p> : null}
                   </div>
                 </div>
+                <MemberBadges badges={badges.get(profile.user_id)} size="sm" />
                 {profile.headline ? <p className="line-clamp-2 text-sm leading-relaxed text-foreground/80">{profile.headline}</p> : null}
                 <div className="mt-auto flex flex-col gap-1.5 text-sm text-foreground/70">
                   {company ? (

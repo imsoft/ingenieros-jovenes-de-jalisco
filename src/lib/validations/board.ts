@@ -11,6 +11,15 @@ export const addBoardMemberSchema = z.object({
   role: z.enum(["admin", "reviewer"], { error: "Elige un rol." }),
 })
 
+// Public title inside the Consejo, shown as a badge on the member's profile. Empty removes it.
+export const boardTitleSchema = z
+  .string()
+  .trim()
+  .max(60, "Máximo 60 caracteres.")
+  .refine((value) => value === "" || value.length >= 2, { message: "Escribe el cargo completo." })
+
+export type BoardTitleFormState = { status: "idle" } | { status: "success" | "error"; message: string }
+
 export type AddBoardMemberField = keyof z.input<typeof addBoardMemberSchema>
 
 export type AddBoardMemberFormState =
